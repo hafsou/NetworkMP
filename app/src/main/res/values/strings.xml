@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Réseau doméstique</string>
+    <string name="renitialiser_reseau">Rénitialiser le réseau</string>
+    <string name="ajout_objets">Ajout d\'objets</string>
+    <string name="ajout_connexions">Ajout de connexions</string>
+    <string name="modif_objets">Modification d’objets/connexions</string>
+</resources>

@@ -1,0 +1,25 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.example.myapplication.MainActivity">
+    <item
+        android:id="@+id/renitialiser_reseau"
+        android:orderInCategory="100"
+        android:title="@string/renitialiser_reseau"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/ajout_objets"
+        android:orderInCategory="100"
+        android:title="@string/ajout_objets"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/ajout_connexions"
+        android:orderInCategory="100"
+        android:title="@string/ajout_connexions"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/modifications_objets_connexions"
+        android:orderInCategory="100"
+        android:title="@string/modif_objets"
+        app:showAsAction="never" />
+</menu>
