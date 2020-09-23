@@ -1,17 +1,23 @@
 package fr.istic.mob.networkMP;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import android.text.InputType;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -89,6 +95,32 @@ public class MainActivity extends AppCompatActivity {
                 float Y = lastTouchDownXY[1];
                 String coordinates = X + " "+ Y;
                 Toast.makeText(getApplicationContext(),coordinates,Toast.LENGTH_LONG).show();
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setTitle("Title");
+
+                // Set up the input
+                final EditText input = new EditText(MainActivity.this);
+                // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+                input.setInputType(InputType.TYPE_CLASS_TEXT );
+                builder.setView(input);
+
+                // Set up the buttons
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String m_Text = input.getText().toString();
+                    }
+                });
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+
+                builder.show();
+
                 graph.addObjet(getApplicationContext(), "montre",X,Y);
                 drawView.setObjets(graph.getObjets());
                 drawView.invalidate();
