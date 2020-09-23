@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.util.SparseArray;
@@ -19,7 +20,7 @@ public class DrawView extends View {
     Paint paint;
     private int taille = 50;
     private ArrayList<Path> connexions;
-    private HashMap<RectF,String> objects;
+    private HashMap<String,RectF> objects;
     private HashMap<RectF,float[]> positionObjets;
     private SparseArray<RectF> mRectPointer = new SparseArray<RectF>();
 
@@ -28,12 +29,12 @@ public class DrawView extends View {
     public DrawView(Context context, AttributeSet attributeSet){
         super(context,attributeSet);
         connexions = new ArrayList<Path>();
-        objects = new HashMap<RectF,String>();
+        objects = new HashMap<String,RectF>();
         positionObjets = new HashMap<RectF,float[]>();
         paint = new Paint();
 
     }
-    public DrawView(Context context, ArrayList<Path> connexions, HashMap<RectF, String> objects, HashMap<RectF,float[]> positionObjets){
+    public DrawView(Context context, ArrayList<Path> connexions, HashMap<String, RectF> objects, HashMap<RectF,float[]> positionObjets){
         super(context);
         this.connexions = connexions;
         this.objects = objects;
@@ -45,16 +46,14 @@ public class DrawView extends View {
 
         paint.setColor(Color.BLACK);
         paint.setStrokeWidth(4);
-        for(RectF rect : objects.keySet()){
+        for(String nameRect : objects.keySet()){
+            RectF rect = objects.get(nameRect);
             paint.setColor(Color.BLACK);
             canvas.drawRect(rect,paint);
             paint.setTextSize(40);
             paint.setColor(Color.WHITE);
-            if(objects.get(rect)!= null) {
-                canvas.drawText(objects.get(rect), rect.left, rect.bottom + 40, paint);
-            }else{
-                canvas.drawText("zzz", rect.left, rect.bottom + 40, paint);
-            }
+            canvas.drawText(nameRect, rect.left, rect.bottom + 40, paint);
+
         }
         System.out.println("on draw passé");
         //Toast.makeText(getContext()," dessin",Toast.LENGTH_LONG).show();
@@ -180,7 +179,8 @@ public class DrawView extends View {
     private RectF getTouchedRect(final int xTouch, final int yTouch) {
         RectF touched = null;
 
-        for (RectF rect : objects.keySet()) {
+        for (String nameRect : objects.keySet()) {
+            RectF rect = objects.get(nameRect);
             if (xTouch<= rect.right && xTouch>= rect.left && yTouch>= rect.top && yTouch<=rect.bottom) {
                 touched = rect;
                 break;
@@ -194,7 +194,7 @@ public class DrawView extends View {
         this.connexions = connexions;
     }
 
-    public void setObjects(HashMap<RectF, String> objets) {
+    public void setObjects(HashMap<String, RectF> objets) {
         this.objects = objets;
     }
 

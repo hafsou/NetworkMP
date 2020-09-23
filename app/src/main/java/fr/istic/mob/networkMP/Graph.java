@@ -12,12 +12,12 @@ public class Graph {
 
     private int taille = 50;
     private ArrayList<Path> connexions;
-    private HashMap<RectF,String> objects;
+    private HashMap<String,RectF> objects;
     private HashMap<RectF,float[]> positionObjets;
 
     public Graph(){
         connexions = new ArrayList<Path>();
-        objects = new HashMap<RectF,String>();
+        objects = new HashMap<String,RectF>();
         positionObjets = new HashMap<RectF,float[]>();
     }
 
@@ -27,7 +27,7 @@ public class Graph {
 
     public void addObjet(Context context, String nomObjet, float x, float y){
         RectF rect = new RectF(x,y,x+taille,y+taille);
-        objects.put(rect, nomObjet);
+        objects.put(nomObjet, rect);
         float[] position = {x,y};
         positionObjets.put(rect, position);
         Toast.makeText(context,"Ajout de l'objet",Toast.LENGTH_LONG).show();
@@ -37,7 +37,7 @@ public class Graph {
 
     }
 
-    public HashMap<RectF, String> getObjects() {
+    public HashMap<String, RectF> getObjects() {
         return objects;
     }
 

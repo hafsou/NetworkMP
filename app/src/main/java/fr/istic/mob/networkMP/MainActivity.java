@@ -3,6 +3,7 @@ package fr.istic.mob.networkMP;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Bundle;
 
@@ -101,12 +102,13 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println(x+";"+y);
                 boolean touchObject = false;
                 String name = "";
-                HashMap<RectF,String> objects = graph.getObjects();
-                for(RectF rect : objects.keySet()){
+                HashMap<String,RectF> objects = graph.getObjects();
+                for(String nameRect : objects.keySet()){
+                    RectF rect = objects.get(nameRect);
                     System.out.println("right = "+ rect.right+" left = "+rect.left+" top = "+ rect.top +" bottom = "+ rect.bottom);
                     if(x<= rect.right && x>= rect.left && y>= rect.top && y<=rect.bottom){
                         touchObject = true;
-                        name = objects.get(rect);
+                        name = nameRect;
                     }
                 }
                 System.out.println("Touché un object :"+touchObject);
@@ -132,8 +134,9 @@ public class MainActivity extends AppCompatActivity {
 
                 boolean touchObject = false;
                 RectF rectToMove = null;
-                HashMap<RectF,String> objects = graph.getObjects();
-                for(RectF rect : objects.keySet()){
+                HashMap<String,RectF> objects = graph.getObjects();
+                for(String nameRect : objects.keySet()){
+                    RectF rect = objects.get(nameRect);
                     System.out.println("right = "+ rect.right+" left = "+rect.left+" top = "+ rect.top +" bottom = "+ rect.bottom);
                     if(x<= rect.right && x>= rect.left && y>= rect.top && y<=rect.bottom){
                         touchObject = true;
