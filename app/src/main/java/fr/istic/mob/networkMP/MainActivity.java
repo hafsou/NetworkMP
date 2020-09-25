@@ -3,6 +3,8 @@ package fr.istic.mob.networkMP;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.os.Bundle;
 
 
@@ -21,6 +23,8 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import java.util.HashMap;
+
 public class MainActivity extends AppCompatActivity {
 
     private ImageView planAppartement;
@@ -29,7 +33,9 @@ public class MainActivity extends AppCompatActivity {
     //to draw connection, object
     private DrawView drawView;
     private Graph graph;
+    private String objectName = null;
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,6 +45,20 @@ public class MainActivity extends AppCompatActivity {
         planAppartement = findViewById(R.id.planAppartement);
         drawView = findViewById(R.id.drawview);
         graph = new Graph();
+
+        planAppartement.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+
+                //save the X,Y coordinates
+                if (event.getActionMasked() == MotionEvent.ACTION_DOWN){
+                    lastTouchDownXY[0] = event.getX();
+                    lastTouchDownXY[1] = event.getY();
+                }
+                //let the touch event pass on to whover needs it
+                return false;
+            }
+        });
 
     }
 
@@ -59,8 +79,10 @@ public class MainActivity extends AppCompatActivity {
                 ajoutObjets();
                 return true;
             case R.id.ajout_connexions:
+                ajoutConnexions();
                 return true;
             case R.id.modifications_objets_connexions:
+                modificationsObjetsConnexions();
                 return true;
         }
 
@@ -71,59 +93,87 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    @SuppressLint("ClickableViewAccessibility")
-    public void ajoutObjets(){
-
-        planAppartement.setOnTouchListener(new View.OnTouchListener() {
+    public void ajoutConnexions(){
+        planAppartement.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
-            public boolean onTouch(View v, MotionEvent event) {
-
-                //save the X,Y coordinates
-                if (event.getActionMasked() == MotionEvent.ACTION_DOWN){
-                    lastTouchDownXY[0] = event.getX();
-                    lastTouchDownXY[1] = event.getY();
+            public boolean onLongClick(View v) {
+                float x = lastTouchDownXY[0];
+                float y = lastTouchDownXY[1];
+                System.out.println(x+";"+y);
+                boolean touchObject = false;
+                String name = "";
+                HashMap<String,RectF> objects = graph.getObjects();
+                for(String nameRect : objects.keySet()){
+                    RectF rect = objects.get(nameRect);
+                    System.out.println("right = "+ rect.right+" left = "+rect.left+" top = "+ rect.top +" bottom = "+ rect.bottom);
+                    if(x<= rect.right && x>= rect.left && y>= rect.top && y<=rect.bottom){
+                        touchObject = true;
+                        name = nameRect;
+                    }
                 }
-                //let the touch event pass on to whover needs it
-                return false;
+                System.out.println("Touché un object :"+touchObject);
+                System.out.println("Nom :"+name);
+
+                return true;
             }
         });
+    }
+
+    public void modificationsObjetsConnexions(){
+
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    public void ajoutObjets(){
 
         planAppartement.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                float X = lastTouchDownXY[0];
-                float Y = lastTouchDownXY[1];
-                String coordinates = X + " "+ Y;
-                Toast.makeText(getApplicationContext(),coordinates,Toast.LENGTH_LONG).show();
+                final float x = lastTouchDownXY[0];
+                final float y = lastTouchDownXY[1];
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                builder.setTitle("Title");
-
-                // Set up the input
-                final EditText input = new EditText(MainActivity.this);
-                // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
-                input.setInputType(InputType.TYPE_CLASS_TEXT );
-                builder.setView(input);
-
-                // Set up the buttons
-                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        String m_Text = input.getText().toString();
+                boolean touchObject = false;
+                RectF rectToMove = null;
+                HashMap<String,RectF> objects = graph.getObjects();
+                for(String nameRect : objects.keySet()){
+                    RectF rect = objects.get(nameRect);
+                    System.out.println("right = "+ rect.right+" left = "+rect.left+" top = "+ rect.top +" bottom = "+ rect.bottom);
+                    if(x<= rect.right && x>= rect.left && y>= rect.top && y<=rect.bottom){
+                        touchObject = true;
+                        rectToMove = rect;
                     }
-                });
-                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                });
+                }
+                if(touchObject == false) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                    builder.setTitle("Nom de l'objet");
+                    // Set up the input
+                    final EditText input = new EditText(MainActivity.this);
+                    // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+                    input.setInputType(InputType.TYPE_CLASS_TEXT);
+                    builder.setView(input);
 
-                builder.show();
+                    // Set up the buttons
+                    builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            objectName = input.getText().toString();
+                            graph.addObjet(getApplicationContext(), objectName, x, y);
+                            drawView.setObjects(graph.getObjects());
+                            drawView.invalidate();
+                        }
+                    });
+                    builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            objectName = null;
+                            dialog.cancel();
+                        }
+                    });
 
-                graph.addObjet(getApplicationContext(), "montre",X,Y);
-                drawView.setObjets(graph.getObjets());
-                drawView.invalidate();
+                    builder.show();
+                }else{
+
+                }
                 return true;
             }
         });
