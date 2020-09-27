@@ -22,6 +22,7 @@ public class DrawView extends View {
     //private ArrayList<Path> connexions;
     private HashMap<String,RectF> objects;
     private SparseArray<RectF> mRectPointer = new SparseArray<RectF>();
+    private SparseArray<Path> mPathPointer = new SparseArray<Path>();
     private Mode mode = Mode.OBJETS;
     private HashMap<String,ArrayList<Path>> objectsConnexions;
 
@@ -44,6 +45,7 @@ public class DrawView extends View {
     public void onDraw(Canvas canvas) {
 
         paint.setColor(Color.BLACK);
+        paint.setStyle(Paint.Style.FILL);
         paint.setStrokeWidth(4);
         for(String nameRect : objects.keySet()){
             RectF rect = objects.get(nameRect);
@@ -54,13 +56,20 @@ public class DrawView extends View {
             canvas.drawText(nameRect, rect.left, rect.bottom + 40, paint);
         }
         paint.setColor(Color.BLACK);
-        paint.setStrokeWidth(40);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(10);
         for(String object : objectsConnexions.keySet()){
             ArrayList<Path> listPath = objectsConnexions.get(object);
             for(Path path : listPath) {
                 canvas.drawPath(path, paint);
             }
         }
+//        Path tst = new Path();
+//        tst.moveTo(500,500);
+//        tst.lineTo(400,800);
+//        tst.reset();
+//        tst.lineTo(100,300);
+//        canvas.drawPath(tst,paint);
         System.out.println("on draw passé");
         //Toast.makeText(getContext()," dessin",Toast.LENGTH_LONG).show();
     }
@@ -70,6 +79,9 @@ public class DrawView extends View {
         boolean handled = false;
 
         RectF touchedRect;
+        RectF firstRectTouched;
+        Path pathT;
+        String nameTouchedRect;
         int xTouch;
         int yTouch;
         int pointerId;
@@ -77,14 +89,16 @@ public class DrawView extends View {
 
         // get touch event coordinates and make transparent rect from it
         switch (event.getActionMasked()) {
-            case MotionEvent.ACTION_DOWN:
-                System.out.println(1);
+            case MotionEvent.ACTION_DOWN:    //appui sur l'écran
                 // it's the first pointer, so clear all existing pointers data
                 clearRectPointer();
+                clearPathPointer();
                 xTouch = (int) event.getX(0);
                 yTouch = (int) event.getY(0);
                 // check if we've touched inside some rectangle
                 touchedRect = getTouchedRect(xTouch, yTouch);
+                firstRectTouched = getTouchedRect(xTouch,yTouch);
+                nameTouchedRect = getNameTouchedRect(xTouch,yTouch);
                 if(mode == Mode.OBJETS) {
                     if (touchedRect != null) {
                         touchedRect.left = xTouch;
@@ -96,11 +110,18 @@ public class DrawView extends View {
                         handled = true;
                     }
                 }else if(mode == Mode.CONNEXIONS){
-                    if(touchedRect != null){
-                        //Path path = connexions.get()
-                        //path.lineTo(xTouch,yTouch);
-                        //connexions.add(path);
-                        //System.out.println("o");
+                    if(touchedRect != null && nameTouchedRect != null){
+                      System.out.println(nameTouchedRect);
+                      ArrayList<Path> listPath = objectsConnexions.get(nameTouchedRect);
+                      if(listPath != null && listPath.size() >0){
+                          Path path = listPath.get(listPath.size() - 1);
+                          path.moveTo(xTouch,yTouch);
+                          mPathPointer.put(event.getPointerId(0), path);
+                          invalidate();
+                          handled = true;
+                          System.out.println("o");
+                      }
+
                     }
                 }
                 break;
@@ -115,14 +136,30 @@ public class DrawView extends View {
 
                 // check if we've touched inside some rectangle
                 touchedRect = getTouchedRect(xTouch, yTouch);
-                if(touchedRect != null) {
-                    mRectPointer.put(pointerId, touchedRect);
-                    touchedRect.left = xTouch;
-                    touchedRect.top = yTouch;
-                    touchedRect.right = xTouch + taille;
-                    touchedRect.bottom = yTouch + taille;
-                    invalidate();
-                    handled = true;
+                nameTouchedRect = getNameTouchedRect(xTouch,yTouch);
+                if(mode == Mode.OBJETS) {
+                    if (touchedRect != null) {
+                        mRectPointer.put(pointerId, touchedRect);
+                        touchedRect.left = xTouch;
+                        touchedRect.top = yTouch;
+                        touchedRect.right = xTouch + taille;
+                        touchedRect.bottom = yTouch + taille;
+                        invalidate();
+                        handled = true;
+                    }
+                }else if(mode == Mode.CONNEXIONS){
+                    if(touchedRect != null && nameTouchedRect != null){
+                        System.out.println(nameTouchedRect);
+                        ArrayList<Path> listPath = objectsConnexions.get(nameTouchedRect);
+                        if(listPath != null && listPath.size()>0) {
+                            Path path = listPath.get(listPath.size() - 1);
+                            mPathPointer.put(pointerId, path);
+                            path.moveTo(xTouch,yTouch);
+                            invalidate();
+                            handled = true;
+                            System.out.println("b");
+                        }
+                    }
                 }
                 break;
 
@@ -139,42 +176,65 @@ public class DrawView extends View {
                     yTouch = (int) event.getY(actionIndex);
 
                     touchedRect = mRectPointer.get(pointerId);
-
-                    if (null != touchedRect) {
-                        touchedRect.left = xTouch;
-                        touchedRect.top = yTouch;
-                        touchedRect.right = xTouch + taille;
-                        touchedRect.bottom = yTouch + taille;
+                    pathT = mPathPointer.get(pointerId);
+                    if(mode == Mode.OBJETS) {
+                        if (null != touchedRect) {
+                            touchedRect.left = xTouch;
+                            touchedRect.top = yTouch;
+                            touchedRect.right = xTouch + taille;
+                            touchedRect.bottom = yTouch + taille;
+                        }
+                    }else if(mode == Mode.CONNEXIONS){
+                        if (null != pathT) {
+                            pathT.lineTo(xTouch, yTouch);
+                        }
                     }
                 }
                 invalidate();
                 handled = true;
                 break;
 
-            case MotionEvent.ACTION_UP:
-                System.out.println(2);
+            case MotionEvent.ACTION_UP:   //relachement du doigt sr l'ecran
+                //draw the path only if the last position is an another object
+                xTouch = (int) event.getX(0);
+                yTouch = (int) event.getY(0);
+                // check if we've touched inside some rectangle
+                touchedRect = getTouchedRect(xTouch, yTouch);
+                nameTouchedRect = getNameTouchedRect(xTouch,yTouch);
+                if(mode == Mode.CONNEXIONS){
+                    pointerId = event.getPointerId(actionIndex);
+                    pathT = mPathPointer.get(pointerId);
+                    if(touchedRect != null && nameTouchedRect != null){
+                        //pathT.reset();
+                        //pathT.moveTo(firstRectTouched.bottom,firstRectTouched.right);
+                        pathT.lineTo(xTouch,yTouch);
+                        System.out.println(nameTouchedRect);
+                    }else{
+                        pathT.reset();
+                    }
+                }
+
                 clearRectPointer();
+                clearPathPointer();
                 invalidate();
                 handled = true;
                 break;
 
             case MotionEvent.ACTION_POINTER_UP:
-                System.out.println(3);
                 // not general pointer was up
                 pointerId = event.getPointerId(actionIndex);
 
                 mRectPointer.remove(pointerId);
+                mPathPointer.remove(pointerId);
                 invalidate();
                 handled = true;
                 break;
 
             case MotionEvent.ACTION_CANCEL:
-                System.out.println(4);
                 handled = true;
                 break;
 
             default:
-                System.out.println(5);
                 // do nothing
                 break;
         }
@@ -190,6 +250,11 @@ public class DrawView extends View {
         mRectPointer.clear();
     }
 
+    private void clearPathPointer() {
+        System.out.println("clearPathPointer");
+        mPathPointer.clear();
+    }
+
 
     private RectF getTouchedRect(final int xTouch, final int yTouch) {
         RectF touched = null;
@@ -197,6 +262,18 @@ public class DrawView extends View {
             RectF rect = objects.get(nameRect);
             if (xTouch<= rect.right && xTouch>= rect.left && yTouch>= rect.top && yTouch<=rect.bottom) {
                 touched = rect;
+                break;
+            }
+        }
+        return touched;
+    }
+
+    private String getNameTouchedRect(final int xTouch, final int yTouch){
+        String touched = null;
+        for (String nameRect : objects.keySet()) {
+            RectF rect = objects.get(nameRect);
+            if (xTouch<= rect.right && xTouch>= rect.left && yTouch>= rect.top && yTouch<=rect.bottom) {
+                touched = nameRect;
                 break;
             }
         }

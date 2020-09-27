@@ -24,7 +24,7 @@ public class Graph {
 
     public void addConnexion(Context context, String nomObjet, float x, float y){
         Path path = new Path();
-        path.lineTo(x,y);
+        path.moveTo(x,y);
         ArrayList<Path> listPath = objectsConnexions.get(nomObjet);
         listPath.add(path);
         objectsConnexions.put(nomObjet,listPath);
