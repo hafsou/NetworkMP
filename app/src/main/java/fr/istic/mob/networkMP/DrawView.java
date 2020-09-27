@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PathMeasure;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
@@ -205,8 +206,13 @@ public class DrawView extends View {
                     pointerId = event.getPointerId(actionIndex);
                     pathT = mPathPointer.get(pointerId);
                     if(touchedRect != null && nameTouchedRect != null){
-                        //pathT.reset();
-                        //pathT.moveTo(firstRectTouched.bottom,firstRectTouched.right);
+                        PathMeasure pm = new PathMeasure(pathT, false);
+                        //coordinates will be here
+                        float aCoordinates[] = {0f, 0f};
+                        //get point from the middle
+                        pm.getPosTan(pm.getLength() * 0f, aCoordinates, null);
+                        pathT.reset();
+                        pathT.moveTo(aCoordinates[0],aCoordinates[1]);
                         pathT.lineTo(xTouch,yTouch);
                         System.out.println(nameTouchedRect);
                     }else{
