@@ -94,29 +94,39 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void ajoutConnexions(){
+        drawView.setMode(Mode.CONNEXIONS);
         planAppartement.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                float x = lastTouchDownXY[0];
-                float y = lastTouchDownXY[1];
-                System.out.println(x+";"+y);
+                return false;
+            }
+        });
+        planAppartement.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final float x = lastTouchDownXY[0];
+                final float y = lastTouchDownXY[1];
+
                 boolean touchObject = false;
-                String name = "";
+                RectF rectToMove = null;
                 HashMap<String,RectF> objects = graph.getObjects();
                 for(String nameRect : objects.keySet()){
                     RectF rect = objects.get(nameRect);
                     System.out.println("right = "+ rect.right+" left = "+rect.left+" top = "+ rect.top +" bottom = "+ rect.bottom);
                     if(x<= rect.right && x>= rect.left && y>= rect.top && y<=rect.bottom){
                         touchObject = true;
-                        name = nameRect;
+                        rectToMove = rect;
                     }
                 }
-                System.out.println("Touché un object :"+touchObject);
-                System.out.println("Nom :"+name);
-
-                return true;
+                if(touchObject == true) {
+                    graph.addConnexion(getApplicationContext(),"test",x,y);
+                    //drawView.setConnexions(graph.getConnexions());7
+                    drawView.setObjectsConnexions(graph.getObjectsConnexions());
+                    drawView.invalidate();
+                }
             }
         });
+
     }
 
     public void modificationsObjetsConnexions(){
@@ -125,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
 
     @SuppressLint("ClickableViewAccessibility")
     public void ajoutObjets(){
-
+        drawView.setMode(Mode.OBJETS);
         planAppartement.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
@@ -171,8 +181,6 @@ public class MainActivity extends AppCompatActivity {
                     });
 
                     builder.show();
-                }else{
-
                 }
                 return true;
             }

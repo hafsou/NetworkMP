@@ -10,30 +10,33 @@ import java.util.HashMap;
 
 public class Graph {
 
-    private int taille = 50;
-    private ArrayList<Path> connexions;
+    private static int taille = 50;
+    //private ArrayList<Path> connexions;
     private HashMap<String,RectF> objects;
-    private HashMap<RectF,float[]> positionObjets;
+    private HashMap<String,ArrayList<Path>> objectsConnexions;
+
 
     public Graph(){
-        connexions = new ArrayList<Path>();
+        //connexions = new ArrayList<Path>();
         objects = new HashMap<String,RectF>();
-        positionObjets = new HashMap<RectF,float[]>();
+        objectsConnexions = new HashMap<String, ArrayList<Path>>();
     }
 
-    public void addConnexion(){
-
+    public void addConnexion(Context context, String nomObjet, float x, float y){
+        Path path = new Path();
+        path.lineTo(x,y);
+        ArrayList<Path> listPath = objectsConnexions.get(nomObjet);
+        listPath.add(path);
+        objectsConnexions.put(nomObjet,listPath);
+        //connexions.add(path);
     }
 
     public void addObjet(Context context, String nomObjet, float x, float y){
         RectF rect = new RectF(x,y,x+taille,y+taille);
         objects.put(nomObjet, rect);
+        objectsConnexions.put(nomObjet, new ArrayList<Path>());
         float[] position = {x,y};
-        positionObjets.put(rect, position);
         Toast.makeText(context,"Ajout de l'objet",Toast.LENGTH_LONG).show();
-
-    }
-    public void addPositionObject(){
 
     }
 
@@ -41,12 +44,14 @@ public class Graph {
         return objects;
     }
 
-    public HashMap<RectF, float[]> getPositionObjects() {
-        return positionObjets;
-    }
 
-    public ArrayList<Path> getConnexions() {
-        return connexions;
+    //public ArrayList<Path> getConnexions() {
+        //return connexions;
+    //}
+
+
+    public HashMap<String, ArrayList<Path>> getObjectsConnexions() {
+        return objectsConnexions;
     }
 
     public int getTaille() {
