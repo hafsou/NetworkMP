@@ -20,26 +20,21 @@ import java.util.HashSet;
 public class DrawView extends View {
     Paint paint;
     private static int taille = 50;
-    //private ArrayList<Path> connexions;
     private HashMap<String,RectF> objects;
     private SparseArray<RectF> mRectPointer = new SparseArray<RectF>();
     private SparseArray<Path> mPathPointer = new SparseArray<Path>();
     private Mode mode = Mode.OBJETS;
-    private HashMap<String,ArrayList<Path>> objectsConnexions;
+    private HashMap<String, HashMap<String,Path>> connexions;
+    private ArrayList<Path> pathTemporaryCreated;
+    private String tmpRectF = "";
 
     public DrawView(Context context, AttributeSet attributeSet){
         super(context,attributeSet);
-        //connexions = new ArrayList<Path>();
         objects = new HashMap<String,RectF>();
         paint = new Paint();
-        objectsConnexions = new HashMap<String, ArrayList<Path>>();
+        connexions = new HashMap<String,HashMap<String, Path>>();
+        pathTemporaryCreated = new ArrayList<Path>();
 
-    }
-    public DrawView(Context context, HashMap<String, ArrayList<Path>> objectsConnexions, HashMap<String, RectF> objects){
-        super(context);
-        //this.connexions = connexions;
-        this.objectsConnexions = objectsConnexions;
-        this.objects = objects;
     }
 
     @Override
@@ -59,19 +54,25 @@ public class DrawView extends View {
         paint.setColor(Color.BLACK);
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(10);
-        for(String object : objectsConnexions.keySet()){
-            ArrayList<Path> listPath = objectsConnexions.get(object);
-            for(Path path : listPath) {
-                canvas.drawPath(path, paint);
+        for(String object1 : connexions.keySet()){
+            for(String object2 : connexions.get(object1).keySet()){
+                HashMap<String,Path> linkToObject2 = connexions.get(object1);
+                if(linkToObject2 != null) {
+                    canvas.drawPath(linkToObject2.get(object2),paint);
+                }
             }
         }
+
+        for(Path path: pathTemporaryCreated) {
+            canvas.drawPath(path, paint);
+        }
+
 //        Path tst = new Path();
 //        tst.moveTo(500,500);
 //        tst.lineTo(400,800);
 //        tst.reset();
 //        tst.lineTo(100,300);
 //        canvas.drawPath(tst,paint);
-        System.out.println("on draw passé");
         //Toast.makeText(getContext()," dessin",Toast.LENGTH_LONG).show();
     }
 
@@ -80,8 +81,8 @@ public class DrawView extends View {
         boolean handled = false;
 
         RectF touchedRect;
-        RectF firstRectTouched;
-        Path pathT;
+        //String firstRectTouchedName;
+        Path pathCreated;
         String nameTouchedRect;
         int xTouch;
         int yTouch;
@@ -98,8 +99,9 @@ public class DrawView extends View {
                 yTouch = (int) event.getY(0);
                 // check if we've touched inside some rectangle
                 touchedRect = getTouchedRect(xTouch, yTouch);
-                firstRectTouched = getTouchedRect(xTouch,yTouch);
+                tmpRectF = getNameTouchedRect(xTouch,yTouch);
                 nameTouchedRect = getNameTouchedRect(xTouch,yTouch);
+                System.out.println("name touched rect : "+nameTouchedRect);
                 if(mode == Mode.OBJETS) {
                     if (touchedRect != null) {
                         touchedRect.left = xTouch;
@@ -112,54 +114,14 @@ public class DrawView extends View {
                     }
                 }else if(mode == Mode.CONNEXIONS){
                     if(touchedRect != null && nameTouchedRect != null){
-                      System.out.println(nameTouchedRect);
-                      ArrayList<Path> listPath = objectsConnexions.get(nameTouchedRect);
-                      if(listPath != null && listPath.size() >0){
-                          Path path = listPath.get(listPath.size() - 1);
-                          path.moveTo(xTouch,yTouch);
-                          mPathPointer.put(event.getPointerId(0), path);
-                          invalidate();
-                          handled = true;
-                          System.out.println("o");
-                      }
-
-                    }
-                }
-                break;
-
-            case MotionEvent.ACTION_POINTER_DOWN:
-                System.out.println("Pointer down");
-                // It secondary pointers, so obtain their ids and check circles
-                pointerId = event.getPointerId(actionIndex);
-
-                xTouch = (int) event.getX(actionIndex);
-                yTouch = (int) event.getY(actionIndex);
-
-                // check if we've touched inside some rectangle
-                touchedRect = getTouchedRect(xTouch, yTouch);
-                nameTouchedRect = getNameTouchedRect(xTouch,yTouch);
-                if(mode == Mode.OBJETS) {
-                    if (touchedRect != null) {
-                        mRectPointer.put(pointerId, touchedRect);
-                        touchedRect.left = xTouch;
-                        touchedRect.top = yTouch;
-                        touchedRect.right = xTouch + taille;
-                        touchedRect.bottom = yTouch + taille;
+                        pathCreated = new Path();
+                        pathCreated.moveTo(xTouch,yTouch);
+                        Path tmpPath = new Path();
+                        tmpPath.moveTo(xTouch,yTouch);
+                        pathTemporaryCreated.add(tmpPath);
+                        mPathPointer.put(event.getPointerId(0), pathCreated);
                         invalidate();
                         handled = true;
-                    }
-                }else if(mode == Mode.CONNEXIONS){
-                    if(touchedRect != null && nameTouchedRect != null){
-                        System.out.println(nameTouchedRect);
-                        ArrayList<Path> listPath = objectsConnexions.get(nameTouchedRect);
-                        if(listPath != null && listPath.size()>0) {
-                            Path path = listPath.get(listPath.size() - 1);
-                            mPathPointer.put(pointerId, path);
-                            path.moveTo(xTouch,yTouch);
-                            invalidate();
-                            handled = true;
-                            System.out.println("b");
-                        }
                     }
                 }
                 break;
@@ -177,7 +139,7 @@ public class DrawView extends View {
                     yTouch = (int) event.getY(actionIndex);
 
                     touchedRect = mRectPointer.get(pointerId);
-                    pathT = mPathPointer.get(pointerId);
+                    pathCreated = mPathPointer.get(pointerId);
                     if(mode == Mode.OBJETS) {
                         if (null != touchedRect) {
                             touchedRect.left = xTouch;
@@ -186,8 +148,9 @@ public class DrawView extends View {
                             touchedRect.bottom = yTouch + taille;
                         }
                     }else if(mode == Mode.CONNEXIONS){
-                        if (null != pathT) {
-                            pathT.lineTo(xTouch, yTouch);
+                        if (null != pathCreated) {
+                            pathCreated.lineTo(xTouch, yTouch);
+                            pathTemporaryCreated.get(0).lineTo(xTouch,yTouch);
                         }
                     }
                 }
@@ -204,19 +167,36 @@ public class DrawView extends View {
                 nameTouchedRect = getNameTouchedRect(xTouch,yTouch);
                 if(mode == Mode.CONNEXIONS){
                     pointerId = event.getPointerId(actionIndex);
-                    pathT = mPathPointer.get(pointerId);
+                    pathCreated = mPathPointer.get(pointerId);
                     if(touchedRect != null && nameTouchedRect != null){
-                        PathMeasure pm = new PathMeasure(pathT, false);
+                        PathMeasure pm = new PathMeasure(pathCreated, false);
                         //coordinates will be here
                         float aCoordinates[] = {0f, 0f};
                         //get point from the middle
                         pm.getPosTan(pm.getLength() * 0f, aCoordinates, null);
-                        pathT.reset();
-                        pathT.moveTo(aCoordinates[0],aCoordinates[1]);
-                        pathT.lineTo(xTouch,yTouch);
-                        System.out.println(nameTouchedRect);
+                        pathCreated.reset();
+                        pathCreated.moveTo(aCoordinates[0],aCoordinates[1]);
+                        pathCreated.lineTo(xTouch,yTouch);
+                        HashMap<String,Path> test = this.connexions.get(tmpRectF);   //FAIRE UN TEST object1 -> object2, link
+                                                                                    // existe pas deja object2 -> object1, link!
+                        if(test != null){
+                            Path test2 = test.get(nameTouchedRect);
+                            if(test2 == null){
+                                test.put(nameTouchedRect,pathCreated);
+                            }else{
+                                System.out.println("testssss:"+test);
+                            }
+                        }else{
+                            HashMap<String,Path> link = new HashMap<String,Path>();
+                            link.put(nameTouchedRect,pathCreated);
+                            System.out.println("firstRectTouchedName : "+tmpRectF);
+                            this.connexions.put(tmpRectF,link);
+                        }
+
+                        pathTemporaryCreated.remove(0);
                     }else{
-                        pathT.reset();
+                        pathCreated.reset();
+                        pathTemporaryCreated.remove(0);
                     }
                 }
 
@@ -286,6 +266,8 @@ public class DrawView extends View {
         return touched;
     }
 
+
+
     //public void setConnexions(ArrayList<Path> connexions) {
         //this.connexions = connexions;
     //}
@@ -302,8 +284,8 @@ public class DrawView extends View {
         this.mode = mode;
     }
 
-    public void setObjectsConnexions(HashMap<String, ArrayList<Path>> objectsConnexions) {
-        this.objectsConnexions = objectsConnexions;
-    }
+//    public void setObjectsConnexions(HashMap<String, ArrayList<Path>> objectsConnexions) {
+//        this.objectsConnexions = objectsConnexions;
+//    }
 }
 

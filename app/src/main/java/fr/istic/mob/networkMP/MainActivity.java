@@ -93,6 +93,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     public void ajoutConnexions(){
         drawView.setMode(Mode.CONNEXIONS);
         planAppartement.setOnLongClickListener(new View.OnLongClickListener() {
@@ -101,34 +102,6 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
         });
-        planAppartement.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final float x = lastTouchDownXY[0];
-                final float y = lastTouchDownXY[1];
-
-                boolean touchObject = false;
-                RectF rectToMove = null;
-                HashMap<String,RectF> objects = graph.getObjects();
-                String touchedObjectName = "";
-                for(String nameRect : objects.keySet()){
-                    RectF rect = objects.get(nameRect);
-                    touchedObjectName = nameRect;
-                    System.out.println("right = "+ rect.right+" left = "+rect.left+" top = "+ rect.top +" bottom = "+ rect.bottom);
-                    if(x<= rect.right && x>= rect.left && y>= rect.top && y<=rect.bottom){
-                        touchObject = true;
-                        rectToMove = rect;
-                    }
-                }
-                if(touchObject == true) {
-                    graph.addConnexion(getApplicationContext(),touchedObjectName,x,y);
-                    //drawView.setConnexions(graph.getConnexions());7
-                    drawView.setObjectsConnexions(graph.getObjectsConnexions());
-                    drawView.invalidate();
-                }
-            }
-        });
-
     }
 
     public void modificationsObjetsConnexions(){
