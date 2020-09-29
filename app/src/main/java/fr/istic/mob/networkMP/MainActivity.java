@@ -3,6 +3,7 @@ package fr.istic.mob.networkMP;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Bundle;
@@ -61,6 +62,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        System.out.println("on passe ici ");
+        // Checks the orientation of the screen
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            Toast.makeText(getApplicationContext(), "landscape", Toast.LENGTH_LONG).show();
+        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
+            Toast.makeText(getApplicationContext(), "portrait", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
@@ -83,12 +96,12 @@ public class MainActivity extends AppCompatActivity {
                 modificationsObjetsConnexions();
                 return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
     public void renitialiserReseau(){
-
+        drawView.reinitializeGraph();
+        drawView.invalidate();
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -103,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void modificationsObjetsConnexions(){
-
+        drawView.setMode(Mode.MODIFICATIONS);
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -117,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
 
                 boolean touchObject = false;
                 RectF rectToMove = null;
-                Graph graph = drawView.getGraph();
+                final Graph graph = drawView.getGraph();
                 HashMap<String,RectF> objects = graph.getObjects();
                 for(String nameRect : objects.keySet()){
                     RectF rect = objects.get(nameRect);
@@ -141,7 +154,6 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             objectName = input.getText().toString();
-                            Graph graph = drawView.getGraph();
                             graph.addObjet(getApplicationContext(), objectName, x, y);
                             drawView.invalidate();
                         }
