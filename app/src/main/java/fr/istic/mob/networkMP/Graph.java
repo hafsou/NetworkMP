@@ -10,30 +10,19 @@ import java.util.HashMap;
 
 public class Graph {
 
-    private int taille = 50;
-    private ArrayList<Path> connexions;
+    private static int taille = 50;
     private HashMap<String,RectF> objects;
-    private HashMap<RectF,float[]> positionObjets;
+    private HashMap<String, HashMap<String,Path>> connexions;
 
     public Graph(){
-        connexions = new ArrayList<Path>();
+        connexions = new HashMap<String, HashMap<String,Path>>();
         objects = new HashMap<String,RectF>();
-        positionObjets = new HashMap<RectF,float[]>();
-    }
-
-    public void addConnexion(){
-
     }
 
     public void addObjet(Context context, String nomObjet, float x, float y){
         RectF rect = new RectF(x,y,x+taille,y+taille);
         objects.put(nomObjet, rect);
-        float[] position = {x,y};
-        positionObjets.put(rect, position);
         Toast.makeText(context,"Ajout de l'objet",Toast.LENGTH_LONG).show();
-
-    }
-    public void addPositionObject(){
 
     }
 
@@ -41,13 +30,6 @@ public class Graph {
         return objects;
     }
 
-    public HashMap<RectF, float[]> getPositionObjects() {
-        return positionObjets;
-    }
-
-    public ArrayList<Path> getConnexions() {
-        return connexions;
-    }
 
     public int getTaille() {
         return taille;
