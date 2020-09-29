@@ -32,7 +32,6 @@ public class MainActivity extends AppCompatActivity {
     private float[] lastTouchDownXY = new float[2];
     //to draw connection, object
     private DrawView drawView;
-    private Graph graph;
     private String objectName = null;
 
     @SuppressLint("ClickableViewAccessibility")
@@ -44,7 +43,6 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         planAppartement = findViewById(R.id.planAppartement);
         drawView = findViewById(R.id.drawview);
-        graph = new Graph();
 
         planAppartement.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -119,6 +117,7 @@ public class MainActivity extends AppCompatActivity {
 
                 boolean touchObject = false;
                 RectF rectToMove = null;
+                Graph graph = drawView.getGraph();
                 HashMap<String,RectF> objects = graph.getObjects();
                 for(String nameRect : objects.keySet()){
                     RectF rect = objects.get(nameRect);
@@ -142,8 +141,8 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             objectName = input.getText().toString();
+                            Graph graph = drawView.getGraph();
                             graph.addObjet(getApplicationContext(), objectName, x, y);
-                            drawView.setObjects(graph.getObjects());
                             drawView.invalidate();
                         }
                     });

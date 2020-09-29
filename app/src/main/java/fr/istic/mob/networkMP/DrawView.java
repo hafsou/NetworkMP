@@ -20,19 +20,17 @@ import java.util.HashSet;
 public class DrawView extends View {
     Paint paint;
     private static int taille = 50;
-    private HashMap<String,RectF> objects;
     private SparseArray<RectF> mRectPointer = new SparseArray<RectF>();
     private SparseArray<Path> mPathPointer = new SparseArray<Path>();
     private Mode mode = Mode.OBJETS;
-    private HashMap<String, HashMap<String,Path>> connexions;
+    private Graph graph;
     private ArrayList<Path> pathTemporaryCreated;
     private String tmpRectF = "";
 
     public DrawView(Context context, AttributeSet attributeSet){
         super(context,attributeSet);
-        objects = new HashMap<String,RectF>();
         paint = new Paint();
-        connexions = new HashMap<String,HashMap<String, Path>>();
+        graph = new Graph();
         pathTemporaryCreated = new ArrayList<Path>();
 
     }
@@ -43,6 +41,8 @@ public class DrawView extends View {
         paint.setColor(Color.BLACK);
         paint.setStyle(Paint.Style.FILL);
         paint.setStrokeWidth(4);
+        HashMap<String,RectF> objects = graph.getObjects();
+        HashMap<String, HashMap<String,Path>> connexions = graph.getConnexions();
         for(String nameRect : objects.keySet()){
             RectF rect = objects.get(nameRect);
             paint.setColor(Color.BLACK);
@@ -128,7 +128,6 @@ public class DrawView extends View {
 
             case MotionEvent.ACTION_MOVE:
                 final int pointerCount = event.getPointerCount();
-
                 System.out.println("Move");
 
                 for (actionIndex = 0; actionIndex < pointerCount; actionIndex++) {
@@ -165,6 +164,7 @@ public class DrawView extends View {
                 // check if we've touched inside some rectangle
                 touchedRect = getTouchedRect(xTouch, yTouch);
                 nameTouchedRect = getNameTouchedRect(xTouch,yTouch);
+                HashMap<String, HashMap<String,Path>> connexions = graph.getConnexions();
                 if(mode == Mode.CONNEXIONS){
                     pointerId = event.getPointerId(actionIndex);
                     pathCreated = mPathPointer.get(pointerId);
@@ -177,7 +177,7 @@ public class DrawView extends View {
                         pathCreated.reset();
                         pathCreated.moveTo(aCoordinates[0],aCoordinates[1]);
                         pathCreated.lineTo(xTouch,yTouch);
-                        HashMap<String,Path> test = this.connexions.get(tmpRectF);   //FAIRE UN TEST object1 -> object2, link
+                        HashMap<String,Path> test = connexions.get(tmpRectF);   //FAIRE UN TEST object1 -> object2, link
                                                                                     // existe pas deja object2 -> object1, link!
                         if(test != null){
                             Path test2 = test.get(nameTouchedRect);
@@ -190,7 +190,7 @@ public class DrawView extends View {
                             HashMap<String,Path> link = new HashMap<String,Path>();
                             link.put(nameTouchedRect,pathCreated);
                             System.out.println("firstRectTouchedName : "+tmpRectF);
-                            this.connexions.put(tmpRectF,link);
+                            connexions.put(tmpRectF,link);
                         }
 
                         pathTemporaryCreated.remove(0);
@@ -244,6 +244,7 @@ public class DrawView extends View {
 
     private RectF getTouchedRect(final int xTouch, final int yTouch) {
         RectF touched = null;
+        HashMap<String,RectF> objects = graph.getObjects();
         for (String nameRect : objects.keySet()) {
             RectF rect = objects.get(nameRect);
             if (xTouch<= rect.right && xTouch>= rect.left && yTouch>= rect.top && yTouch<=rect.bottom) {
@@ -256,6 +257,7 @@ public class DrawView extends View {
 
     private String getNameTouchedRect(final int xTouch, final int yTouch){
         String touched = null;
+        HashMap<String,RectF> objects = graph.getObjects();
         for (String nameRect : objects.keySet()) {
             RectF rect = objects.get(nameRect);
             if (xTouch<= rect.right && xTouch>= rect.left && yTouch>= rect.top && yTouch<=rect.bottom) {
@@ -266,14 +268,8 @@ public class DrawView extends View {
         return touched;
     }
 
-
-
-    //public void setConnexions(ArrayList<Path> connexions) {
-        //this.connexions = connexions;
-    //}
-
-    public void setObjects(HashMap<String, RectF> objets) {
-        this.objects = objets;
+    public Graph getGraph() {
+        return graph;
     }
 
     public Mode getMode() {
@@ -284,8 +280,5 @@ public class DrawView extends View {
         this.mode = mode;
     }
 
-//    public void setObjectsConnexions(HashMap<String, ArrayList<Path>> objectsConnexions) {
-//        this.objectsConnexions = objectsConnexions;
-//    }
 }
 

@@ -23,13 +23,15 @@ public class Graph {
         RectF rect = new RectF(x,y,x+taille,y+taille);
         objects.put(nomObjet, rect);
         Toast.makeText(context,"Ajout de l'objet",Toast.LENGTH_LONG).show();
-
     }
 
     public HashMap<String, RectF> getObjects() {
         return objects;
     }
 
+    public HashMap<String, HashMap<String, Path>> getConnexions() {
+        return connexions;
+    }
 
     public int getTaille() {
         return taille;
