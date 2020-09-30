@@ -87,23 +87,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        System.out.println("on passe ici ");
-        // Checks the orientation of the screen
-        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            Toast.makeText(getApplicationContext(), "landscape", Toast.LENGTH_LONG).show();
-            //planAppartement.setAdjustViewBounds( true);
-            //planAppartement.setScaleType( ImageView.ScaleType.CENTER_CROP);
-        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
-            Toast.makeText(getApplicationContext(), "portrait", Toast.LENGTH_LONG).show();
-            //planAppartement.setAdjustViewBounds( true);
-            //planAppartement.setScaleType( ImageView.ScaleType.CENTER_CROP);
-
-        }
-    }
-
-    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);

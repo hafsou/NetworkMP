@@ -1,5 +1,6 @@
 package fr.istic.mob.networkMP;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Canvas;
@@ -17,13 +18,14 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.ScrollView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-public class DrawView extends View {
+public class DrawView extends ScrollView {
     Paint paint;
     private static int taille = 50;
     private SparseArray<RectF> mRectPointer = new SparseArray<RectF>();
@@ -32,7 +34,6 @@ public class DrawView extends View {
     private Graph graph;
     private ArrayList<Path> pathTemporaryCreated;
     private String tmpRectName = "";
-    //private final Matrix matrix = new Matrix();
 
     public DrawView(Context context, AttributeSet attributeSet){
         super(context,attributeSet);
@@ -41,22 +42,14 @@ public class DrawView extends View {
         pathTemporaryCreated = new ArrayList<Path>();
     }
 
-//    @Override
-//    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-//        super.onSizeChanged(w, h, oldw, oldh);
-//        //matrix.reset();
-//        //matrix.postRotate(45);
-//        //matrix.postTranslate(w/2, h/2);
-//    }
-
 
     @Override
     public void onDraw(Canvas canvas) {
-        //canvas.save();
-        //canvas.concat(matrix);
+        System.out.println(getScrollX()+getScrollY());
         paint.setColor(Color.BLACK);
         paint.setStyle(Paint.Style.FILL);
         paint.setStrokeWidth(4);
+        canvas.drawLine(10-getScrollX(),50-getScrollY(),400+getScrollX(),300+getScrollY(),paint);
         HashMap<String,RectF> objects = graph.getObjects();
         HashMap<String, HashMap<String,Path>> connexions = graph.getConnexions();
         for(String nameRect : objects.keySet()){
@@ -84,7 +77,6 @@ public class DrawView extends View {
         for(Path path: pathTemporaryCreated) {
             canvas.drawPath(path, paint);
         }
-        //canvas.restore();
     }
 
     @Override
