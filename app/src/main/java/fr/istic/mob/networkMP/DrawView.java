@@ -1,17 +1,22 @@
 package fr.istic.mob.networkMP;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,6 +31,7 @@ public class DrawView extends View {
     private Graph graph;
     private ArrayList<Path> pathTemporaryCreated;
     private String tmpRectName = "";
+    //private final Matrix matrix = new Matrix();
 
     public DrawView(Context context, AttributeSet attributeSet){
         super(context,attributeSet);
@@ -36,8 +42,17 @@ public class DrawView extends View {
     }
 
     @Override
-    public void onDraw(Canvas canvas) {
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        //matrix.reset();
+        //matrix.postRotate(45);
+        //matrix.postTranslate(w/2, h/2);
+    }
 
+    @Override
+    public void onDraw(Canvas canvas) {
+        //canvas.save();
+        //canvas.concat(matrix);
         paint.setColor(Color.BLACK);
         paint.setStyle(Paint.Style.FILL);
         paint.setStrokeWidth(4);
@@ -68,6 +83,7 @@ public class DrawView extends View {
         for(Path path: pathTemporaryCreated) {
             canvas.drawPath(path, paint);
         }
+        //canvas.restore();
     }
 
     @Override

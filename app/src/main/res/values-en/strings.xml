@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Network Mallouky/Pedrau</string>
+    <string name="modif_objets">Modify an object or a connection</string>
+    <string name="ajout_connexions">Add connexion</string>
+    <string name="ajout_objets">Add object</string>
+    <string name="renitialiser_reseau">Reinitialize the netwok</string>
+    <string name="popup_title">Object\'s name</string>
+    <string name="annuler">Cancel</string>
+    <string name="confirmer">Confirm</string>
+    <string name="choose_plan">Choose a plan</string>
+    <string name="popup_plan">Choose a plan</string>
+</resources>

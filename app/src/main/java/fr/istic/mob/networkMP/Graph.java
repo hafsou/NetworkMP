@@ -25,7 +25,7 @@ public class Graph {
         String nomObjetFinal = nomObjet+"_"+String.valueOf(nbObjet);
         objects.put(nomObjetFinal, rect);
         nbObjet++;
-        Toast.makeText(context,"Ajout de l'objet",Toast.LENGTH_LONG).show();
+        //Toast.makeText(context,"Ajout de l'objet",Toast.LENGTH_LONG).show();
     }
 
     public HashMap<String, RectF> getObjects() {

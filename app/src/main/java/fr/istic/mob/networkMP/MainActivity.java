@@ -3,6 +3,7 @@ package fr.istic.mob.networkMP;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -20,8 +21,11 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.HashMap;
@@ -34,6 +38,11 @@ public class MainActivity extends AppCompatActivity {
     //to draw connection, object
     private DrawView drawView;
     private String objectName = null;
+    private Button choosePlan;
+    private ListView listView;
+    private ArrayAdapter<String> adapter;
+    private String[] names = {"India", "Brazil", "Argentina",
+            "Portugal", "France", "England", "Italy"};
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -44,11 +53,27 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         planAppartement = findViewById(R.id.planAppartement);
         drawView = findViewById(R.id.drawview);
+        choosePlan = findViewById(R.id.button_choose_plan);
+        choosePlan.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setTitle(getResources().getString(R.string.popup_plan));
 
+                View rowList = getLayoutInflater().inflate(R.layout.row, null);
+                listView = rowList.findViewById(R.id.listView);
+                adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, names);
+                listView.setAdapter(adapter);
+                adapter.notifyDataSetChanged();
+                builder.setView(rowList);
+                AlertDialog dialog = builder.create();
+
+                dialog.show();
+            }
+        });
         planAppartement.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-
                 //save the X,Y coordinates
                 if (event.getActionMasked() == MotionEvent.ACTION_DOWN){
                     lastTouchDownXY[0] = event.getX();
@@ -61,17 +86,20 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        System.out.println("on passe ici ");
-        // Checks the orientation of the screen
-        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            Toast.makeText(getApplicationContext(), "landscape", Toast.LENGTH_LONG).show();
-        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
-            Toast.makeText(getApplicationContext(), "portrait", Toast.LENGTH_LONG).show();
-        }
-    }
+//    @Override
+//    public void onConfigurationChanged(Configuration newConfig) {
+//        super.onConfigurationChanged(newConfig);
+//        System.out.println("on passe ici ");
+//        // Checks the orientation of the screen
+//        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+//            Toast.makeText(getApplicationContext(), "landscape", Toast.LENGTH_LONG).show();
+//            //drawView.
+//        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
+//            Toast.makeText(getApplicationContext(), "portrait", Toast.LENGTH_LONG).show();
+//
+//
+//        }
+//    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -142,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 if(touchObject == false) {
                     AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                    builder.setTitle("Nom de l'objet");
+                    builder.setTitle(getResources().getString(R.string.popup_title));
                     // Set up the input
                     final EditText input = new EditText(MainActivity.this);
                     // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
@@ -150,7 +178,7 @@ public class MainActivity extends AppCompatActivity {
                     builder.setView(input);
 
                     // Set up the buttons
-                    builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    builder.setPositiveButton(getResources().getString(R.string.confirmer), new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             objectName = input.getText().toString();
@@ -158,7 +186,7 @@ public class MainActivity extends AppCompatActivity {
                             drawView.invalidate();
                         }
                     });
-                    builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    builder.setNegativeButton(getResources().getString(R.string.annuler), new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             objectName = null;
