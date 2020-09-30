@@ -16,6 +16,7 @@ import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -38,16 +39,16 @@ public class DrawView extends View {
         paint = new Paint();
         graph = new Graph();
         pathTemporaryCreated = new ArrayList<Path>();
-
     }
 
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-        //matrix.reset();
-        //matrix.postRotate(45);
-        //matrix.postTranslate(w/2, h/2);
-    }
+//    @Override
+//    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+//        super.onSizeChanged(w, h, oldw, oldh);
+//        //matrix.reset();
+//        //matrix.postRotate(45);
+//        //matrix.postTranslate(w/2, h/2);
+//    }
+
 
     @Override
     public void onDraw(Canvas canvas) {
