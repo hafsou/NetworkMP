@@ -10,21 +10,19 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
 
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/planAppartement"
-        android:layout_width="420dp"
-        android:layout_height="420dp"
-        android:scaleType="fitCenter"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
-        android:adjustViewBounds="true"
-        android:src="@drawable/plan"/>
+        <HorizontalScrollView
+            android:layout_width="wrap_content" android:layout_height="wrap_content">
+
+            <fr.istic.mob.networkMP.DrawView
+                android:id="@+id/drawview"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/plan"/>
+
+
+        </HorizontalScrollView>
 
     </ScrollView>
 
-    <fr.istic.mob.networkMP.DrawView
-        android:id="@+id/drawview"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
 
 </RelativeLayout>

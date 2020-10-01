@@ -1,39 +1,35 @@
 package fr.istic.mob.networkMP;
 
-import android.app.Activity;
+import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.Context;
-import android.content.res.Configuration;
+import android.content.DialogInterface;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
-import android.graphics.Rect;
 import android.graphics.RectF;
+import android.text.InputType;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
 import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.WindowManager;
-import android.widget.ImageView;
-import android.widget.ScrollView;
-import android.widget.Toast;
-
+import android.widget.EditText;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 
-public class DrawView extends ScrollView {
+public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
     Paint paint;
     private static int taille = 50;
+    private float[] lastTouchDownXY = new float[2];
     private SparseArray<RectF> mRectPointer = new SparseArray<RectF>();
     private SparseArray<Path> mPathPointer = new SparseArray<Path>();
     private Mode mode = Mode.OBJETS;
     private Graph graph;
     private ArrayList<Path> pathTemporaryCreated;
     private String tmpRectName = "";
+    private String objectName;
 
     public DrawView(Context context, AttributeSet attributeSet){
         super(context,attributeSet);
@@ -45,11 +41,9 @@ public class DrawView extends ScrollView {
 
     @Override
     public void onDraw(Canvas canvas) {
-        System.out.println(getScrollX()+getScrollY());
         paint.setColor(Color.BLACK);
         paint.setStyle(Paint.Style.FILL);
         paint.setStrokeWidth(4);
-        canvas.drawLine(10-getScrollX(),50-getScrollY(),400+getScrollX(),300+getScrollY(),paint);
         HashMap<String,RectF> objects = graph.getObjects();
         HashMap<String, HashMap<String,Path>> connexions = graph.getConnexions();
         for(String nameRect : objects.keySet()){
@@ -79,19 +73,18 @@ public class DrawView extends ScrollView {
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         boolean handled = false;
 
         RectF touchedRect;
-        //String firstRectTouchedName;
         Path pathCreated;
         String nameTouchedRect;
         int xTouch;
         int yTouch;
         int pointerId;
         int actionIndex = event.getActionIndex();
-
         // get touch event coordinates and make transparent rect from it
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:    //appui sur l'écran
@@ -107,6 +100,9 @@ public class DrawView extends ScrollView {
                 System.out.println("name touched rect : "+nameTouchedRect);
                 if(mode == Mode.OBJETS) {
                     if (touchedRect != null) {
+                        setOnLongClickListener(null);
+                        this.getParent().requestDisallowInterceptTouchEvent(true);
+                        this.getParent().getParent().requestDisallowInterceptTouchEvent(true);
                         touchedRect.left = xTouch;
                         touchedRect.top = yTouch;
                         touchedRect.right = xTouch + taille;
@@ -117,6 +113,8 @@ public class DrawView extends ScrollView {
                     }
                 }else if(mode == Mode.CONNEXIONS){
                     if(touchedRect != null && nameTouchedRect != null){
+                        this.getParent().requestDisallowInterceptTouchEvent(true);
+                        this.getParent().getParent().requestDisallowInterceptTouchEvent(true);
                         pathCreated = new Path();
                         pathCreated.moveTo(xTouch,yTouch);
                         Path tmpPath = new Path();
@@ -128,6 +126,8 @@ public class DrawView extends ScrollView {
                     }
                 }else if(mode == Mode.MODIFICATIONS){
                     if (touchedRect != null) {
+                        this.getParent().requestDisallowInterceptTouchEvent(true);
+                        this.getParent().getParent().requestDisallowInterceptTouchEvent(true);
                         touchedRect.left = xTouch;
                         touchedRect.top = yTouch;
                         touchedRect.right = xTouch + taille;
@@ -145,7 +145,6 @@ public class DrawView extends ScrollView {
                 HashMap<String, HashMap<String,Path>> theConnexions = graph.getConnexions();
                 HashMap<String,RectF> allObjects = graph.getObjects();
                 System.out.println("Move");
-
                 for (actionIndex = 0; actionIndex < pointerCount; actionIndex++) {
                     // Some pointer has moved, search it by pointer id
                     pointerId = event.getPointerId(actionIndex);
@@ -155,36 +154,36 @@ public class DrawView extends ScrollView {
 
                     touchedRect = mRectPointer.get(pointerId);
                     pathCreated = mPathPointer.get(pointerId);
-                    if(mode == Mode.OBJETS) {
+                    if (mode == Mode.OBJETS) {
                         if (null != touchedRect) {
                             touchedRect.left = xTouch;
                             touchedRect.top = yTouch;
                             touchedRect.right = xTouch + taille;
                             touchedRect.bottom = yTouch + taille;
                         }
-                    }else if(mode == Mode.CONNEXIONS){
+                    } else if (mode == Mode.CONNEXIONS) {
                         if (null != pathCreated) {
                             pathCreated.lineTo(xTouch, yTouch);
-                            pathTemporaryCreated.get(0).lineTo(xTouch,yTouch);
+                            pathTemporaryCreated.get(0).lineTo(xTouch, yTouch);
                         }
-                    }else if(mode == Mode.MODIFICATIONS){
-                        if( touchedRect != null){
+                    } else if (mode == Mode.MODIFICATIONS) {
+                        if (touchedRect != null) {
                             touchedRect.left = xTouch;
                             touchedRect.top = yTouch;
                             touchedRect.right = xTouch + taille;
                             touchedRect.bottom = yTouch + taille;
-                            String nameOfRect = getNameTouchedRect(xTouch,yTouch);
-                            HashMap<String,Path> link = theConnexions.get(nameOfRect);
-                            for(String object1 : theConnexions.keySet()){
+                            String nameOfRect = getNameTouchedRect(xTouch, yTouch);
+                            HashMap<String, Path> link = theConnexions.get(nameOfRect);
+                            for (String object1 : theConnexions.keySet()) {
                                 link = theConnexions.get(object1);
-                                for(String object2 : link.keySet()){
-                                    if(object1.equals(nameOfRect) ){
+                                for (String object2 : link.keySet()) {
+                                    if (object1.equals(nameOfRect)) {
                                         Path pathToModify = link.get(object2);
                                         pathToModify.reset();
                                         pathToModify.moveTo(xTouch, yTouch);
                                         RectF rectObject2 = allObjects.get(object2);
                                         pathToModify.lineTo(rectObject2.left, rectObject2.top);
-                                    }else if(object2.equals(nameOfRect)){
+                                    } else if (object2.equals(nameOfRect)) {
                                         Path pathToModify = link.get(object2);
                                         pathToModify.reset();
                                         pathToModify.moveTo(xTouch, yTouch);
@@ -196,6 +195,7 @@ public class DrawView extends ScrollView {
                         }
                     }
                 }
+
                 invalidate();
                 handled = true;
                 break;
@@ -252,8 +252,10 @@ public class DrawView extends ScrollView {
                         tmpRectName = "";
                         pathCreated = null;
                         pathTemporaryCreated.remove(0);
+
                     }
                 }
+
                 clearRectPointer();
                 clearPathPointer();
                 invalidate();
@@ -281,6 +283,8 @@ public class DrawView extends ScrollView {
 
         return super.onTouchEvent(event) || handled;
     }
+
+
 
     /**
      *

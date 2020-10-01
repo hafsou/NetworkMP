@@ -39,7 +39,7 @@ import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
 
-    private ImageView planAppartement;
+    //private ImageView planAppartement;
     //to save X,Y coordinates
     private float[] lastTouchDownXY = new float[2];
     //to draw connection, object
@@ -59,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        planAppartement = findViewById(R.id.planAppartement);
+        //planAppartement = findViewById(R.id.planAppartement);
         drawView = findViewById(R.id.drawview);
         choosePlan = findViewById(R.id.button_choose_plan);
         plansImages = new HashMap<String,Drawable>();
@@ -96,14 +96,16 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         String planName = (String) parent.getItemAtPosition(position);
-                        planAppartement.setImageDrawable(plansImages.get(planName));
+                        //planAppartement.setImageDrawable(plansImages.get(planName));
+                        drawView.setBackground(plansImages.get(planName));
                         dialog.cancel();
                     }
                 });
                 dialog.show();
             }
         });
-        planAppartement.setOnTouchListener(new View.OnTouchListener() {
+        //planAppartement
+        drawView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 //save the X,Y coordinates
@@ -119,19 +121,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showFileChooser() {
-
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("*/*");
         intent.addCategory(Intent.CATEGORY_OPENABLE);
-
         try {
-            startActivityForResult(
-                    Intent.createChooser(intent, "Select a File to Upload"),
-                    FILE_SELECT_CODE);
+            startActivityForResult(Intent.createChooser(intent, "Select a File to Upload"),FILE_SELECT_CODE);
         } catch (android.content.ActivityNotFoundException ex) {
-            // Potentially direct the user to the Market with a Dialog
-            Toast.makeText(this, "Please install a File Manager.",
-                    Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Please install a File Manager.",Toast.LENGTH_LONG).show();
         }
     }
 
@@ -144,17 +140,17 @@ public class MainActivity extends AppCompatActivity {
                     // Get the Uri of the selected file
                     try {
                         InputStream inputStream = getContentResolver().openInputStream(uri);
-                        System.out.println("URI : "+uri.toString());
                         int indexDelimiter = uri.toString().lastIndexOf("/");
                         String name = uri.toString().substring(indexDelimiter+1);
                         Drawable imagePlan = Drawable.createFromStream(inputStream, uri.toString() );
-                        planAppartement.setImageDrawable(imagePlan);
+                        //planAppartement.setImageDrawable(imagePlan);
+                        drawView.setBackground(imagePlan);
                         plansImages.put(name,imagePlan);
                     } catch (FileNotFoundException e) {
                         Drawable imagePlan = getDrawable(R.drawable.plan);
-                        planAppartement.setImageDrawable(imagePlan);
+                        //planAppartement.setImageDrawable(imagePlan);
+                        drawView.setBackground(imagePlan);
                     }
-                    //Log.d(TAG, "File Uri: " + uri.toString());
                 }
                 break;
         }
@@ -195,7 +191,8 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("ClickableViewAccessibility")
     public void ajoutConnexions(){
         drawView.setMode(Mode.CONNEXIONS);
-        planAppartement.setOnLongClickListener(new View.OnLongClickListener() {
+        //planAppartement
+        drawView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
                 return false;
@@ -210,12 +207,13 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("ClickableViewAccessibility")
     public void ajoutObjets(){
         drawView.setMode(Mode.OBJETS);
-        planAppartement.setOnLongClickListener(new View.OnLongClickListener() {
+        //planAppartement
+        drawView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
                 final float x = lastTouchDownXY[0];
                 final float y = lastTouchDownXY[1];
-
+                //System.out.println("OHJFNDDDDDDDDDDDDDDDDDDDDDDDD");
                 boolean touchObject = false;
                 RectF rectToMove = null;
                 final Graph graph = drawView.getGraph();
