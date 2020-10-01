@@ -7,13 +7,17 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 
 import android.text.InputType;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -21,6 +25,7 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -28,6 +33,8 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
@@ -41,8 +48,9 @@ public class MainActivity extends AppCompatActivity {
     private Button choosePlan;
     private ListView listView;
     private ArrayAdapter<String> adapter;
-    private String[] names = {"India", "Brazil", "Argentina",
-            "Portugal", "France", "England", "Italy"};
+    private HashMap<String,Drawable> plansImages;
+    private static final int FILE_SELECT_CODE = 0;
+    private static final String TAG = null;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -54,20 +62,44 @@ public class MainActivity extends AppCompatActivity {
         planAppartement = findViewById(R.id.planAppartement);
         drawView = findViewById(R.id.drawview);
         choosePlan = findViewById(R.id.button_choose_plan);
+        plansImages = new HashMap<String,Drawable>();
+        plansImages.put("plan",getDrawable(R.drawable.plan));
+        plansImages.put("plan T2", getDrawable(R.drawable.plandeux));
+        plansImages.put("plan T3", getDrawable(R.drawable.plantrois));
         choosePlan.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                 builder.setTitle(getResources().getString(R.string.popup_plan));
-
                 View rowList = getLayoutInflater().inflate(R.layout.row, null);
                 listView = rowList.findViewById(R.id.listView);
-                adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, names);
+                Button import_button = rowList.findViewById(R.id.import_image);
+                String[] names = new String[plansImages.keySet().size()];
+                int i=0;
+                for(String name : plansImages.keySet()){
+                    names[i] = name;
+                    i++;
+                }
+                adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, names );
                 listView.setAdapter(adapter);
                 adapter.notifyDataSetChanged();
                 builder.setView(rowList);
-                AlertDialog dialog = builder.create();
-
+                final AlertDialog dialog = builder.create();
+                import_button.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        showFileChooser();
+                        dialog.cancel();
+                    }
+                });
+                listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        String planName = (String) parent.getItemAtPosition(position);
+                        planAppartement.setImageDrawable(plansImages.get(planName));
+                        dialog.cancel();
+                    }
+                });
                 dialog.show();
             }
         });
@@ -84,6 +116,49 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    private void showFileChooser() {
+
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("*/*");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+
+        try {
+            startActivityForResult(
+                    Intent.createChooser(intent, "Select a File to Upload"),
+                    FILE_SELECT_CODE);
+        } catch (android.content.ActivityNotFoundException ex) {
+            // Potentially direct the user to the Market with a Dialog
+            Toast.makeText(this, "Please install a File Manager.",
+                    Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case FILE_SELECT_CODE:
+                if (resultCode == RESULT_OK) {
+                    Uri uri = data.getData();
+                    // Get the Uri of the selected file
+                    try {
+                        InputStream inputStream = getContentResolver().openInputStream(uri);
+                        System.out.println("URI : "+uri.toString());
+                        int indexDelimiter = uri.toString().lastIndexOf("/");
+                        String name = uri.toString().substring(indexDelimiter+1);
+                        Drawable imagePlan = Drawable.createFromStream(inputStream, uri.toString() );
+                        planAppartement.setImageDrawable(imagePlan);
+                        plansImages.put(name,imagePlan);
+                    } catch (FileNotFoundException e) {
+                        Drawable imagePlan = getDrawable(R.drawable.plan);
+                        planAppartement.setImageDrawable(imagePlan);
+                    }
+                    //Log.d(TAG, "File Uri: " + uri.toString());
+                }
+                break;
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override

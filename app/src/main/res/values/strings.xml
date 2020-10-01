@@ -9,4 +9,5 @@
     <string name="confirmer">Confirmer</string>
     <string name="choose_plan">Choisir un plan</string>
     <string name="popup_plan">Choisir un plan</string>
+    <string name="import_image">Importer un plan</string>
 </resources>
