@@ -100,7 +100,7 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                 System.out.println("name touched rect : "+nameTouchedRect);
                 if(mode == Mode.OBJETS) {
                     if (touchedRect != null) {
-                        setOnLongClickListener(null);
+                        setLongClickable(false);
                         this.getParent().requestDisallowInterceptTouchEvent(true);
                         this.getParent().getParent().requestDisallowInterceptTouchEvent(true);
                         touchedRect.left = xTouch;
@@ -110,6 +110,8 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                         mRectPointer.put(event.getPointerId(0), touchedRect);
                         invalidate();
                         handled = true;
+                    }else{
+                        setLongClickable(true);
                     }
                 }else if(mode == Mode.CONNEXIONS){
                     if(touchedRect != null && nameTouchedRect != null){
@@ -141,6 +143,7 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                 break;
 
             case MotionEvent.ACTION_MOVE:
+                setLongClickable(false);
                 final int pointerCount = event.getPointerCount();
                 HashMap<String, HashMap<String,Path>> theConnexions = graph.getConnexions();
                 HashMap<String,RectF> allObjects = graph.getObjects();
@@ -280,7 +283,7 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                 // do nothing
                 break;
         }
-
+        //setLongClickable(true);
         return super.onTouchEvent(event) || handled;
     }
 
