@@ -1,7 +1,13 @@
 <resources>
-    <string name="app_name">Réseau doméstique</string>
     <string name="renitialiser_reseau">Rénitialiser le réseau</string>
     <string name="ajout_objets">Ajout d\'objets</string>
     <string name="ajout_connexions">Ajout de connexions</string>
     <string name="modif_objets">Modification d’objets/connexions</string>
+    <string name="app_name">Réseau Mallouky/Pedrau</string>
+    <string name="popup_title">Nom de l\'objet</string>
+    <string name="annuler">Annuler</string>
+    <string name="confirmer">Confirmer</string>
+    <string name="choose_plan">Choisir un plan</string>
+    <string name="popup_plan">Choisir un plan</string>
+    <string name="import_image">Importer un plan</string>
 </resources>

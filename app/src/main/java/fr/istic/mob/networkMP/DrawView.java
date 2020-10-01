@@ -1,55 +1,66 @@
 package fr.istic.mob.networkMP;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
+import android.widget.ImageView;
+import android.widget.ScrollView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-public class DrawView extends View {
+public class DrawView extends ScrollView {
     Paint paint;
     private static int taille = 50;
-    private HashMap<String,RectF> objects;
     private SparseArray<RectF> mRectPointer = new SparseArray<RectF>();
     private SparseArray<Path> mPathPointer = new SparseArray<Path>();
     private Mode mode = Mode.OBJETS;
-    private HashMap<String, HashMap<String,Path>> connexions;
+    private Graph graph;
     private ArrayList<Path> pathTemporaryCreated;
-    private String tmpRectF = "";
+    private String tmpRectName = "";
 
     public DrawView(Context context, AttributeSet attributeSet){
         super(context,attributeSet);
-        objects = new HashMap<String,RectF>();
         paint = new Paint();
-        connexions = new HashMap<String,HashMap<String, Path>>();
+        graph = new Graph();
         pathTemporaryCreated = new ArrayList<Path>();
-
     }
+
 
     @Override
     public void onDraw(Canvas canvas) {
-
+        System.out.println(getScrollX()+getScrollY());
         paint.setColor(Color.BLACK);
         paint.setStyle(Paint.Style.FILL);
         paint.setStrokeWidth(4);
+        canvas.drawLine(10-getScrollX(),50-getScrollY(),400+getScrollX(),300+getScrollY(),paint);
+        HashMap<String,RectF> objects = graph.getObjects();
+        HashMap<String, HashMap<String,Path>> connexions = graph.getConnexions();
         for(String nameRect : objects.keySet()){
             RectF rect = objects.get(nameRect);
             paint.setColor(Color.BLACK);
             canvas.drawRect(rect,paint);
             paint.setTextSize(40);
             paint.setColor(Color.WHITE);
-            canvas.drawText(nameRect, rect.left, rect.bottom + 40, paint);
+            int indexDelimiter = nameRect.lastIndexOf("_");
+            String objectName = nameRect.substring(0,indexDelimiter);
+            canvas.drawText(objectName, rect.left, rect.bottom + 40, paint);
         }
         paint.setColor(Color.BLACK);
         paint.setStyle(Paint.Style.STROKE);
@@ -66,14 +77,6 @@ public class DrawView extends View {
         for(Path path: pathTemporaryCreated) {
             canvas.drawPath(path, paint);
         }
-
-//        Path tst = new Path();
-//        tst.moveTo(500,500);
-//        tst.lineTo(400,800);
-//        tst.reset();
-//        tst.lineTo(100,300);
-//        canvas.drawPath(tst,paint);
-        //Toast.makeText(getContext()," dessin",Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -99,7 +102,7 @@ public class DrawView extends View {
                 yTouch = (int) event.getY(0);
                 // check if we've touched inside some rectangle
                 touchedRect = getTouchedRect(xTouch, yTouch);
-                tmpRectF = getNameTouchedRect(xTouch,yTouch);
+                tmpRectName = getNameTouchedRect(xTouch,yTouch);
                 nameTouchedRect = getNameTouchedRect(xTouch,yTouch);
                 System.out.println("name touched rect : "+nameTouchedRect);
                 if(mode == Mode.OBJETS) {
@@ -123,12 +126,24 @@ public class DrawView extends View {
                         invalidate();
                         handled = true;
                     }
+                }else if(mode == Mode.MODIFICATIONS){
+                    if (touchedRect != null) {
+                        touchedRect.left = xTouch;
+                        touchedRect.top = yTouch;
+                        touchedRect.right = xTouch + taille;
+                        touchedRect.bottom = yTouch + taille;
+                        mRectPointer.put(event.getPointerId(0), touchedRect);
+                        HashMap<String, HashMap<String,Path>> connexions = graph.getConnexions();
+                        invalidate();
+                        handled = true;
+                    }
                 }
                 break;
 
             case MotionEvent.ACTION_MOVE:
                 final int pointerCount = event.getPointerCount();
-
+                HashMap<String, HashMap<String,Path>> theConnexions = graph.getConnexions();
+                HashMap<String,RectF> allObjects = graph.getObjects();
                 System.out.println("Move");
 
                 for (actionIndex = 0; actionIndex < pointerCount; actionIndex++) {
@@ -152,6 +167,33 @@ public class DrawView extends View {
                             pathCreated.lineTo(xTouch, yTouch);
                             pathTemporaryCreated.get(0).lineTo(xTouch,yTouch);
                         }
+                    }else if(mode == Mode.MODIFICATIONS){
+                        if( touchedRect != null){
+                            touchedRect.left = xTouch;
+                            touchedRect.top = yTouch;
+                            touchedRect.right = xTouch + taille;
+                            touchedRect.bottom = yTouch + taille;
+                            String nameOfRect = getNameTouchedRect(xTouch,yTouch);
+                            HashMap<String,Path> link = theConnexions.get(nameOfRect);
+                            for(String object1 : theConnexions.keySet()){
+                                link = theConnexions.get(object1);
+                                for(String object2 : link.keySet()){
+                                    if(object1.equals(nameOfRect) ){
+                                        Path pathToModify = link.get(object2);
+                                        pathToModify.reset();
+                                        pathToModify.moveTo(xTouch, yTouch);
+                                        RectF rectObject2 = allObjects.get(object2);
+                                        pathToModify.lineTo(rectObject2.left, rectObject2.top);
+                                    }else if(object2.equals(nameOfRect)){
+                                        Path pathToModify = link.get(object2);
+                                        pathToModify.reset();
+                                        pathToModify.moveTo(xTouch, yTouch);
+                                        RectF rectObject1 = allObjects.get(object1);
+                                        pathToModify.lineTo(rectObject1.left, rectObject1.top);
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 invalidate();
@@ -165,6 +207,7 @@ public class DrawView extends View {
                 // check if we've touched inside some rectangle
                 touchedRect = getTouchedRect(xTouch, yTouch);
                 nameTouchedRect = getNameTouchedRect(xTouch,yTouch);
+                HashMap<String, HashMap<String,Path>> connexions = graph.getConnexions();
                 if(mode == Mode.CONNEXIONS){
                     pointerId = event.getPointerId(actionIndex);
                     pathCreated = mPathPointer.get(pointerId);
@@ -177,29 +220,40 @@ public class DrawView extends View {
                         pathCreated.reset();
                         pathCreated.moveTo(aCoordinates[0],aCoordinates[1]);
                         pathCreated.lineTo(xTouch,yTouch);
-                        HashMap<String,Path> test = this.connexions.get(tmpRectF);   //FAIRE UN TEST object1 -> object2, link
-                                                                                    // existe pas deja object2 -> object1, link!
-                        if(test != null){
-                            Path test2 = test.get(nameTouchedRect);
-                            if(test2 == null){
-                                test.put(nameTouchedRect,pathCreated);
-                            }else{
-                                System.out.println("testssss:"+test);
+                        //System.out.println(pathExist(tmpRectName,nameTouchedRect));
+                        if(!pathExist(tmpRectName,nameTouchedRect)){
+                            if(connexions.size() == 0){
+                                HashMap<String,Path> link = new HashMap<String,Path>();
+                                link.put(nameTouchedRect,pathCreated);
+                                System.out.println("firstRectTouchedName : "+tmpRectName);
+                                connexions.put(tmpRectName,link);
+                            }else {
+                                HashMap<String, Path> link = connexions.get(tmpRectName);
+                                if (link != null) {
+                                    link.put(nameTouchedRect,pathCreated);
+                                } else {
+                                    link = connexions.get(nameTouchedRect);
+                                    if(link !=null) {
+                                        link.put(tmpRectName, pathCreated);
+                                    }else{
+                                        HashMap<String,Path> link2 = new HashMap<String,Path>();
+                                        link2.put(nameTouchedRect,pathCreated);
+                                        System.out.println("firstRectTouchedName : "+tmpRectName);
+                                        connexions.put(tmpRectName,link2);
+                                    }
+                                }
                             }
                         }else{
-                            HashMap<String,Path> link = new HashMap<String,Path>();
-                            link.put(nameTouchedRect,pathCreated);
-                            System.out.println("firstRectTouchedName : "+tmpRectF);
-                            this.connexions.put(tmpRectF,link);
+                            tmpRectName = "";
+                            pathCreated = null;
                         }
-
                         pathTemporaryCreated.remove(0);
                     }else{
-                        pathCreated.reset();
+                        tmpRectName = "";
+                        pathCreated = null;
                         pathTemporaryCreated.remove(0);
                     }
                 }
-
                 clearRectPointer();
                 clearPathPointer();
                 invalidate();
@@ -229,6 +283,45 @@ public class DrawView extends View {
     }
 
     /**
+     *
+     * @param firstObject
+     * @param secondObject
+     * @return
+     */
+    private boolean pathExist(String firstObject, String secondObject){
+        boolean exist = false;
+        HashMap<String, HashMap<String,Path>> connexions = graph.getConnexions();
+        for(String object1 : connexions.keySet()){
+            for(String object2 : connexions.get(object1).keySet()){
+                HashMap<String,Path> linkToObject2 = connexions.get(object1);
+                if(linkToObject2 != null) {
+                    if((object1.equals(firstObject) && object2.equals(secondObject)) || (object1.equals(secondObject) && object2.equals(firstObject))){
+                        exist = true;
+                    }
+
+                }
+            }
+        }
+        return exist;
+    }
+
+    private void displayConnexions(){
+        HashMap<String, HashMap<String,Path>> connexions = graph.getConnexions();
+        for(String object1 : connexions.keySet()){
+            for(String object2 : connexions.get(object1).keySet()){
+                HashMap<String,Path> linkToObject2 = connexions.get(object1);
+                if(linkToObject2 != null) {
+                    System.out.println("Lien entre : "+object1+" et "+object2);
+                }
+            }
+        }
+    }
+
+    public void reinitializeGraph(){
+        graph.reinitialize();
+    }
+
+    /**
      * Clears all CircleArea - pointer id relations
      */
     private void clearRectPointer() {
@@ -244,6 +337,7 @@ public class DrawView extends View {
 
     private RectF getTouchedRect(final int xTouch, final int yTouch) {
         RectF touched = null;
+        HashMap<String,RectF> objects = graph.getObjects();
         for (String nameRect : objects.keySet()) {
             RectF rect = objects.get(nameRect);
             if (xTouch<= rect.right && xTouch>= rect.left && yTouch>= rect.top && yTouch<=rect.bottom) {
@@ -256,6 +350,7 @@ public class DrawView extends View {
 
     private String getNameTouchedRect(final int xTouch, final int yTouch){
         String touched = null;
+        HashMap<String,RectF> objects = graph.getObjects();
         for (String nameRect : objects.keySet()) {
             RectF rect = objects.get(nameRect);
             if (xTouch<= rect.right && xTouch>= rect.left && yTouch>= rect.top && yTouch<=rect.bottom) {
@@ -266,14 +361,8 @@ public class DrawView extends View {
         return touched;
     }
 
-
-
-    //public void setConnexions(ArrayList<Path> connexions) {
-        //this.connexions = connexions;
-    //}
-
-    public void setObjects(HashMap<String, RectF> objets) {
-        this.objects = objets;
+    public Graph getGraph() {
+        return graph;
     }
 
     public Mode getMode() {
@@ -284,8 +373,5 @@ public class DrawView extends View {
         this.mode = mode;
     }
 
-//    public void setObjectsConnexions(HashMap<String, ArrayList<Path>> objectsConnexions) {
-//        this.objectsConnexions = objectsConnexions;
-//    }
 }
 
