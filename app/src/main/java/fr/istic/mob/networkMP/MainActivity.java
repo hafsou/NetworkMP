@@ -5,8 +5,11 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -39,7 +42,6 @@ import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
 
-    //private ImageView planAppartement;
     //to save X,Y coordinates
     private float[] lastTouchDownXY = new float[2];
     //to draw connection, object
@@ -59,7 +61,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        //planAppartement = findViewById(R.id.planAppartement);
         drawView = findViewById(R.id.drawview);
         choosePlan = findViewById(R.id.button_choose_plan);
         plansImages = new HashMap<String,Drawable>();
@@ -96,7 +97,6 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         String planName = (String) parent.getItemAtPosition(position);
-                        //planAppartement.setImageDrawable(plansImages.get(planName));
                         drawView.setBackground(plansImages.get(planName));
                         dialog.cancel();
                     }
@@ -104,7 +104,6 @@ public class MainActivity extends AppCompatActivity {
                 dialog.show();
             }
         });
-        //planAppartement
         drawView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -142,13 +141,13 @@ public class MainActivity extends AppCompatActivity {
                         InputStream inputStream = getContentResolver().openInputStream(uri);
                         int indexDelimiter = uri.toString().lastIndexOf("/");
                         String name = uri.toString().substring(indexDelimiter+1);
-                        Drawable imagePlan = Drawable.createFromStream(inputStream, uri.toString() );
-                        //planAppartement.setImageDrawable(imagePlan);
+                        Bitmap b = BitmapFactory.decodeStream(inputStream);
+                        b.setDensity(Bitmap.DENSITY_NONE);
+                        Drawable imagePlan = new BitmapDrawable(getResources(),b);
                         drawView.setBackground(imagePlan);
                         plansImages.put(name,imagePlan);
                     } catch (FileNotFoundException e) {
                         Drawable imagePlan = getDrawable(R.drawable.plan);
-                        //planAppartement.setImageDrawable(imagePlan);
                         drawView.setBackground(imagePlan);
                     }
                 }
@@ -207,13 +206,11 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("ClickableViewAccessibility")
     public void ajoutObjets(){
         drawView.setMode(Mode.OBJETS);
-        //planAppartement
         drawView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
                 final float x = lastTouchDownXY[0];
                 final float y = lastTouchDownXY[1];
-                //System.out.println("OHJFNDDDDDDDDDDDDDDDDDDDDDDDD");
                 boolean touchObject = false;
                 RectF rectToMove = null;
                 final Graph graph = drawView.getGraph();
