@@ -5,6 +5,7 @@
     <string name="modif_objets">Modification d’objets/connexions</string>
     <string name="app_name">Réseau Mallouky/Pedrau</string>
     <string name="popup_title">Nom de l\'objet</string>
+    <string name="popupNamePath_title">Nom de la connexion</string>
     <string name="annuler">Annuler</string>
     <string name="confirmer">Confirmer</string>
     <string name="choose_plan">Choisir un plan</string>

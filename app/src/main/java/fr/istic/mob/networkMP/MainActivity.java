@@ -201,6 +201,51 @@ public class MainActivity extends AppCompatActivity {
 
     public void modificationsObjetsConnexions(){
         drawView.setMode(Mode.MODIFICATIONS);
+        drawView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                final float x = lastTouchDownXY[0];
+                final float y = lastTouchDownXY[1];
+                boolean touchObject = false;
+                RectF rectTouched = null;
+                final Graph graph = drawView.getGraph();
+                final HashMap<String,RectF> objects = graph.getObjects();
+                for(String nameRect : objects.keySet()){
+                    RectF rect = objects.get(nameRect);
+                    System.out.println("right = "+ rect.right+" left = "+rect.left+" top = "+ rect.top +" bottom = "+ rect.bottom);
+                    if(x<= rect.right && x>= rect.left && y>= rect.top && y<=rect.bottom){
+                        touchObject = true;
+                        rectTouched = rect;
+                        objectName = nameRect;
+                    }
+                }
+                if(touchObject == true) {
+                    // setup the alert builder
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                    builder.setTitle("Choose action");  //traduction attention
+
+                    // add a list
+                    String[] choices = {"delete object"};
+                    builder.setItems(choices, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            switch (which) {
+                                case 0: // delete object
+                                    if(objectName != null) {
+                                        graph.deleteObjet(objectName);
+                                        drawView.invalidate();
+                                    }
+                            }
+                        }
+                    });
+
+                    // create and show the alert dialog
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                }
+                return true;
+            }
+        });
     }
 
     @SuppressLint("ClickableViewAccessibility")

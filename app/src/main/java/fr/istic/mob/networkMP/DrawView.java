@@ -1,16 +1,22 @@
 package fr.istic.mob.networkMP;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.res.Configuration;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.graphics.RectF;
+import android.text.InputType;
 import android.util.AttributeSet;
 import android.util.SparseArray;
 import android.view.MotionEvent;
+import android.widget.EditText;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -25,6 +31,7 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
     private ArrayList<Path> pathTemporaryCreated;
     private String tmpRectName = "";
     private String objectName;
+    private String connexionName;
 
     public DrawView(Context context, AttributeSet attributeSet){
         super(context,attributeSet);
@@ -51,18 +58,34 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
             String objectName = nameRect.substring(0,indexDelimiter);
             canvas.drawText(objectName, rect.left, rect.bottom + 40, paint);
         }
-        paint.setColor(Color.BLACK);
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setStrokeWidth(10);
         for(String object1 : connexions.keySet()){
             for(String object2 : connexions.get(object1).keySet()){
+                paint.setColor(Color.BLACK);
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(10);
                 HashMap<String,Path> linkToObject2 = connexions.get(object1);
                 if(linkToObject2 != null) {
-                    canvas.drawPath(linkToObject2.get(object2),paint);
+                    Path pathToDraw = linkToObject2.get(object2);
+                    System.out.println("DESSIN : " + object1 + " --- " + object2);
+                    canvas.drawPath(pathToDraw, paint);
+                    if (graph.hasConnexionName(object1, object2)) {
+                        paint.setStyle(Paint.Style.FILL);
+                        paint.setTextSize(40);
+                        paint.setColor(Color.WHITE);
+                        String connexionName = graph.getConnexionName(object1, object2);
+                        PathMeasure pm = new PathMeasure(pathToDraw, false);
+                        //coordinates will be here
+                        float aCoordinates[] = {0f, 0f};
+                        //get point from the middle
+                        pm.getPosTan(pm.getLength() * 0.5f, aCoordinates, null);
+                        canvas.drawText(connexionName, aCoordinates[0], aCoordinates[1], paint);
+                    }
                 }
             }
         }
-
+        paint.setColor(Color.BLACK);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(10);
         for(Path path: pathTemporaryCreated) {
             canvas.drawPath(path, paint);
         }
@@ -122,23 +145,11 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                         handled = true;
                     }
                 }else if(mode == Mode.MODIFICATIONS){
-                    if (touchedRect != null) {
-                        this.getParent().requestDisallowInterceptTouchEvent(true);
-                        this.getParent().getParent().requestDisallowInterceptTouchEvent(true);
-                        touchedRect.left = xTouch;
-                        touchedRect.top = yTouch;
-                        touchedRect.right = xTouch + taille;
-                        touchedRect.bottom = yTouch + taille;
-                        mRectPointer.put(event.getPointerId(0), touchedRect);
-                        HashMap<String, HashMap<String,Path>> connexions = graph.getConnexions();
-                        invalidate();
-                        handled = true;
-                    }
+                    setLongClickable(true);
                 }
                 break;
 
             case MotionEvent.ACTION_MOVE:
-                setLongClickable(false);
                 final int pointerCount = event.getPointerCount();
                 HashMap<String, HashMap<String,Path>> theConnexions = graph.getConnexions();
                 HashMap<String,RectF> allObjects = graph.getObjects();
@@ -154,18 +165,6 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                     pathCreated = mPathPointer.get(pointerId);
                     if (mode == Mode.OBJETS) {
                         if (null != touchedRect) {
-                            touchedRect.left = xTouch;
-                            touchedRect.top = yTouch;
-                            touchedRect.right = xTouch + taille;
-                            touchedRect.bottom = yTouch + taille;
-                        }
-                    } else if (mode == Mode.CONNEXIONS) {
-                        if (null != pathCreated) {
-                            pathCreated.lineTo(xTouch, yTouch);
-                            pathTemporaryCreated.get(0).lineTo(xTouch, yTouch);
-                        }
-                    } else if (mode == Mode.MODIFICATIONS) {
-                        if (touchedRect != null) {
                             touchedRect.left = xTouch;
                             touchedRect.top = yTouch;
                             touchedRect.right = xTouch + taille;
@@ -191,6 +190,11 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                                 }
                             }
                         }
+                    } else if (mode == Mode.CONNEXIONS) {
+                        if (null != pathCreated) {
+                            pathCreated.lineTo(xTouch, yTouch);
+                            pathTemporaryCreated.get(0).lineTo(xTouch, yTouch);
+                        }
                     }
                 }
 
@@ -199,6 +203,7 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                 break;
 
             case MotionEvent.ACTION_UP:   //relachement du doigt sr l'ecran
+                setLongClickable(true);
                 //draw the path only if the last position is an another object
                 xTouch = (int) event.getX(0);
                 yTouch = (int) event.getY(0);
@@ -209,7 +214,7 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                 if(mode == Mode.CONNEXIONS){
                     pointerId = event.getPointerId(actionIndex);
                     pathCreated = mPathPointer.get(pointerId);
-                    if(touchedRect != null && nameTouchedRect != null){
+                    if(touchedRect != null && nameTouchedRect != tmpRectName){
                         PathMeasure pm = new PathMeasure(pathCreated, false);
                         //coordinates will be here
                         float aCoordinates[] = {0f, 0f};
@@ -218,26 +223,31 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                         pathCreated.reset();
                         pathCreated.moveTo(aCoordinates[0],aCoordinates[1]);
                         pathCreated.lineTo(xTouch,yTouch);
-                        //System.out.println(pathExist(tmpRectName,nameTouchedRect));
+                        System.out.println("un lien existe : "+pathExist(tmpRectName,nameTouchedRect));
+                        displayConnexions();
                         if(!pathExist(tmpRectName,nameTouchedRect)){
                             if(connexions.size() == 0){
                                 HashMap<String,Path> link = new HashMap<String,Path>();
                                 link.put(nameTouchedRect,pathCreated);
-                                System.out.println("firstRectTouchedName : "+tmpRectName);
                                 connexions.put(tmpRectName,link);
+                                popupNamePath(tmpRectName,nameTouchedRect,getContext());
                             }else {
                                 HashMap<String, Path> link = connexions.get(tmpRectName);
                                 if (link != null) {
                                     link.put(nameTouchedRect,pathCreated);
+                                    connexions.put(tmpRectName,link);
+                                    popupNamePath(tmpRectName,nameTouchedRect,getContext());
                                 } else {
                                     link = connexions.get(nameTouchedRect);
                                     if(link !=null) {
                                         link.put(tmpRectName, pathCreated);
+                                        connexions.put(nameTouchedRect,link);
+                                        popupNamePath(tmpRectName,nameTouchedRect,getContext());
                                     }else{
                                         HashMap<String,Path> link2 = new HashMap<String,Path>();
                                         link2.put(nameTouchedRect,pathCreated);
-                                        System.out.println("firstRectTouchedName : "+tmpRectName);
                                         connexions.put(tmpRectName,link2);
+                                        popupNamePath(tmpRectName,nameTouchedRect,getContext());
                                     }
                                 }
                             }
@@ -282,7 +292,37 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
         return super.onTouchEvent(event) || handled;
     }
 
+    private boolean popupNamePath(final String objet1, final String objet2, Context context){
+        final boolean[] addConnexion = {false};
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(getResources().getString(R.string.popupNamePath_title));
+        // Set up the input
+        final EditText input = new EditText(context);
+        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        builder.setView(input);
 
+        // Set up the buttons
+        builder.setPositiveButton(getResources().getString(R.string.confirmer), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                connexionName = input.getText().toString();
+                graph.addConnexionName(objet1, objet2, connexionName);
+                addConnexion[0] = true;
+                invalidate();
+            }
+        });
+        builder.setNegativeButton(getResources().getString(R.string.annuler), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                connexionName = null;
+                addConnexion[0] = false;
+                dialog.cancel();
+            }
+        });
+        builder.show();
+        return addConnexion[0];
+    }
 
     /**
      *

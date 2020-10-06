@@ -11,4 +11,5 @@
     <string name="choose_plan">Choose a plan</string>
     <string name="popup_plan">Choose a plan</string>
     <string name="import_image">Import plan</string>
+    <string name="popupNamePath_title">Connection\'s name</string>
 </resources>
