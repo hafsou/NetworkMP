@@ -2,11 +2,7 @@ package fr.istic.mob.networkMP;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.Path;
 import android.graphics.RectF;
-import android.widget.Toast;
-
-import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Graph {
@@ -14,12 +10,12 @@ public class Graph {
     private static int taille = 50;
     private int nbObjet = 0;
     private HashMap<String,RectF> objects;
-    private HashMap<String, HashMap<String,Path>> connexions;
+    private HashMap<String, HashMap<String,CustomPath>> connexions;
     private HashMap<String, HashMap<String,String>> connexionsNames;
     private HashMap<String, Color> objectsColor;
 
     public Graph(){
-        connexions = new HashMap<String, HashMap<String,Path>>();
+        connexions = new HashMap<String, HashMap<String,CustomPath>>();
         connexionsNames = new HashMap<String, HashMap<String,String>>();
         objects = new HashMap<String,RectF>();
     }
@@ -33,16 +29,21 @@ public class Graph {
 
     public void deleteObjet(String nomObjet){
         objects.remove(nomObjet);
-        HashMap<String, HashMap<String,Path>> connexionsTmp = new HashMap<String, HashMap<String,Path>>();
+        HashMap<String, HashMap<String,CustomPath>> connexionsTmp = new HashMap<String, HashMap<String,CustomPath>>();
         //suppression des connexions associées
         for(String object1 : connexions.keySet()){
             for(String object2 : connexions.get(object1).keySet()){
-                HashMap<String,Path> linkToObject2 = connexions.get(object1);
+                HashMap<String,CustomPath> linkToObject2 = connexions.get(object1);
                 if(linkToObject2 != null) {
                     if((!object1.equals(nomObjet) && !object2.equals(nomObjet))){
-                        HashMap<String,Path> linkTmp = new HashMap<String,Path>();
-                        linkTmp.put(object2,linkToObject2.get(object2));
-                        connexionsTmp.put(object1,linkTmp);
+                        HashMap<String,CustomPath> tmp = connexionsTmp.get(object1);
+                        if(tmp != null){
+                            tmp.put(object2,linkToObject2.get(object2));
+                        }else {
+                            HashMap<String, CustomPath> linkTmp = new HashMap<String, CustomPath>();
+                            linkTmp.put(object2, linkToObject2.get(object2));
+                            connexionsTmp.put(object1, linkTmp);
+                        }
                     }
 
                 }
@@ -56,13 +57,13 @@ public class Graph {
         return objects;
     }
 
-    public HashMap<String, HashMap<String, Path>> getConnexions() {
+    public HashMap<String, HashMap<String, CustomPath>> getConnexions() {
         return connexions;
     }
 
     public void reinitialize(){
         objects = new HashMap<String,RectF>();
-        connexions = new HashMap<String, HashMap<String,Path>>();
+        connexions = new HashMap<String, HashMap<String,CustomPath>>();
         connexionsNames = new HashMap<String, HashMap<String,String>>();
         nbObjet = 0;
     }

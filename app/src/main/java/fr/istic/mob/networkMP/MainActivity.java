@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -36,6 +37,9 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -53,6 +57,8 @@ public class MainActivity extends AppCompatActivity {
     private HashMap<String,Drawable> plansImages;
     private static final int FILE_SELECT_CODE = 0;
     private static final String TAG = null;
+    SharedPreferences mPrefs;
+
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -61,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        mPrefs = getPreferences(MODE_PRIVATE);
         drawView = findViewById(R.id.drawview);
         choosePlan = findViewById(R.id.button_choose_plan);
         plansImages = new HashMap<String,Drawable>();
@@ -178,12 +185,33 @@ public class MainActivity extends AppCompatActivity {
             case R.id.modifications_objets_connexions:
                 modificationsObjetsConnexions();
                 return true;
+            case R.id.save_network:
+                sauvegarder_reseau();
+                return true;
+            case R.id.upload_network:
+                upload_network();
         }
         return super.onOptionsItemSelected(item);
     }
 
     public void renitialiserReseau(){
         drawView.reinitializeGraph();
+        drawView.invalidate();
+    }
+
+    public void sauvegarder_reseau(){
+        SharedPreferences.Editor prefsEditor = mPrefs.edit();
+        Gson gson = new GsonBuilder().registerTypeAdapter(CustomPath.class, new PathSerializer()).setPrettyPrinting().create();
+        String json = gson.toJson(drawView.getGraph());
+        prefsEditor.putString("Graph", json);
+        prefsEditor.commit();
+    }
+
+    public void upload_network(){
+        Gson gson = new GsonBuilder().registerTypeAdapter(CustomPath.class, new PathDeserializer()).create();
+        String json = mPrefs.getString("Graph", "");
+        Graph graph = gson.fromJson(json, Graph.class);
+        drawView.setGraph(graph);
         drawView.invalidate();
     }
 
