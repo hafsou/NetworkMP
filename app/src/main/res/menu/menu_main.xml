@@ -3,9 +3,24 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.example.myapplication.MainActivity">
     <item
-        android:id="@+id/renitialiser_reseau"
+    android:id="@+id/renitialiser_reseau"
+    android:orderInCategory="101"
+    android:title="@string/renitialiser_reseau"
+    app:showAsAction="never" />
+    <item
+        android:id="@+id/save_network"
         android:orderInCategory="101"
-        android:title="@string/renitialiser_reseau"
+        android:title="@string/save_network"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/share_mail"
+        android:orderInCategory="101"
+        android:title="@string/share_mail"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/upload_network"
+        android:orderInCategory="101"
+        android:title="@string/upload_network"
         app:showAsAction="never" />
     <item
         android:id="@+id/ajout_objets"

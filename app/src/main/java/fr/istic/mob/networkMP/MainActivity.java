@@ -4,9 +4,13 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -33,13 +37,15 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
 
-    private ImageView planAppartement;
     //to save X,Y coordinates
     private float[] lastTouchDownXY = new float[2];
     //to draw connection, object
@@ -51,6 +57,8 @@ public class MainActivity extends AppCompatActivity {
     private HashMap<String,Drawable> plansImages;
     private static final int FILE_SELECT_CODE = 0;
     private static final String TAG = null;
+    SharedPreferences mPrefs;
+
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -59,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        planAppartement = findViewById(R.id.planAppartement);
+        mPrefs = getPreferences(MODE_PRIVATE);
         drawView = findViewById(R.id.drawview);
         choosePlan = findViewById(R.id.button_choose_plan);
         plansImages = new HashMap<String,Drawable>();
@@ -96,14 +104,14 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         String planName = (String) parent.getItemAtPosition(position);
-                        planAppartement.setImageDrawable(plansImages.get(planName));
+                        drawView.setBackground(plansImages.get(planName));
                         dialog.cancel();
                     }
                 });
                 dialog.show();
             }
         });
-        planAppartement.setOnTouchListener(new View.OnTouchListener() {
+        drawView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 //save the X,Y coordinates
@@ -119,19 +127,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showFileChooser() {
-
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("*/*");
         intent.addCategory(Intent.CATEGORY_OPENABLE);
-
         try {
-            startActivityForResult(
-                    Intent.createChooser(intent, "Select a File to Upload"),
-                    FILE_SELECT_CODE);
+            startActivityForResult(Intent.createChooser(intent, "Select a File to Upload"),FILE_SELECT_CODE);
         } catch (android.content.ActivityNotFoundException ex) {
-            // Potentially direct the user to the Market with a Dialog
-            Toast.makeText(this, "Please install a File Manager.",
-                    Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Please install a File Manager.",Toast.LENGTH_LONG).show();
         }
     }
 
@@ -144,17 +146,17 @@ public class MainActivity extends AppCompatActivity {
                     // Get the Uri of the selected file
                     try {
                         InputStream inputStream = getContentResolver().openInputStream(uri);
-                        System.out.println("URI : "+uri.toString());
                         int indexDelimiter = uri.toString().lastIndexOf("/");
                         String name = uri.toString().substring(indexDelimiter+1);
-                        Drawable imagePlan = Drawable.createFromStream(inputStream, uri.toString() );
-                        planAppartement.setImageDrawable(imagePlan);
+                        Bitmap b = BitmapFactory.decodeStream(inputStream);
+                        b.setDensity(Bitmap.DENSITY_NONE);
+                        Drawable imagePlan = new BitmapDrawable(getResources(),b);
+                        drawView.setBackground(imagePlan);
                         plansImages.put(name,imagePlan);
                     } catch (FileNotFoundException e) {
                         Drawable imagePlan = getDrawable(R.drawable.plan);
-                        planAppartement.setImageDrawable(imagePlan);
+                        drawView.setBackground(imagePlan);
                     }
-                    //Log.d(TAG, "File Uri: " + uri.toString());
                 }
                 break;
         }
@@ -183,6 +185,11 @@ public class MainActivity extends AppCompatActivity {
             case R.id.modifications_objets_connexions:
                 modificationsObjetsConnexions();
                 return true;
+            case R.id.save_network:
+                sauvegarder_reseau();
+                return true;
+            case R.id.upload_network:
+                upload_network();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -192,10 +199,27 @@ public class MainActivity extends AppCompatActivity {
         drawView.invalidate();
     }
 
+    public void sauvegarder_reseau(){
+        SharedPreferences.Editor prefsEditor = mPrefs.edit();
+        Gson gson = new GsonBuilder().registerTypeAdapter(CustomPath.class, new PathSerializer()).setPrettyPrinting().create();
+        String json = gson.toJson(drawView.getGraph());
+        prefsEditor.putString("Graph", json);
+        prefsEditor.commit();
+    }
+
+    public void upload_network(){
+        Gson gson = new GsonBuilder().registerTypeAdapter(CustomPath.class, new PathDeserializer()).create();
+        String json = mPrefs.getString("Graph", "");
+        Graph graph = gson.fromJson(json, Graph.class);
+        drawView.setGraph(graph);
+        drawView.invalidate();
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     public void ajoutConnexions(){
         drawView.setMode(Mode.CONNEXIONS);
-        planAppartement.setOnLongClickListener(new View.OnLongClickListener() {
+        //planAppartement
+        drawView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
                 return false;
@@ -205,17 +229,61 @@ public class MainActivity extends AppCompatActivity {
 
     public void modificationsObjetsConnexions(){
         drawView.setMode(Mode.MODIFICATIONS);
+        drawView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                final float x = lastTouchDownXY[0];
+                final float y = lastTouchDownXY[1];
+                boolean touchObject = false;
+                RectF rectTouched = null;
+                final Graph graph = drawView.getGraph();
+                final HashMap<String,RectF> objects = graph.getObjects();
+                for(String nameRect : objects.keySet()){
+                    RectF rect = objects.get(nameRect);
+                    System.out.println("right = "+ rect.right+" left = "+rect.left+" top = "+ rect.top +" bottom = "+ rect.bottom);
+                    if(x<= rect.right && x>= rect.left && y>= rect.top && y<=rect.bottom){
+                        touchObject = true;
+                        rectTouched = rect;
+                        objectName = nameRect;
+                    }
+                }
+                if(touchObject == true) {
+                    // setup the alert builder
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                    builder.setTitle("Choose action");  //traduction attention
+
+                    // add a list
+                    String[] choices = {"delete object"};
+                    builder.setItems(choices, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            switch (which) {
+                                case 0: // delete object
+                                    if(objectName != null) {
+                                        graph.deleteObjet(objectName);
+                                        drawView.invalidate();
+                                    }
+                            }
+                        }
+                    });
+
+                    // create and show the alert dialog
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                }
+                return true;
+            }
+        });
     }
 
     @SuppressLint("ClickableViewAccessibility")
     public void ajoutObjets(){
         drawView.setMode(Mode.OBJETS);
-        planAppartement.setOnLongClickListener(new View.OnLongClickListener() {
+        drawView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
                 final float x = lastTouchDownXY[0];
                 final float y = lastTouchDownXY[1];
-
                 boolean touchObject = false;
                 RectF rectToMove = null;
                 final Graph graph = drawView.getGraph();
