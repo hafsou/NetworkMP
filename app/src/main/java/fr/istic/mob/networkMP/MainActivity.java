@@ -2,12 +2,15 @@ package fr.istic.mob.networkMP;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
@@ -19,7 +22,11 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
+import android.os.Environment;
+import android.os.StrictMode;
+import android.provider.MediaStore;
 import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -40,9 +47,12 @@ import android.widget.Toast;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -190,6 +200,10 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             case R.id.upload_network:
                 upload_network();
+                return true;
+            case R.id.send_mail:
+                screenshot();
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -200,19 +214,51 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void sauvegarder_reseau(){
-        SharedPreferences.Editor prefsEditor = mPrefs.edit();
+        final SharedPreferences.Editor prefsEditor = mPrefs.edit();
         Gson gson = new GsonBuilder().registerTypeAdapter(CustomPath.class, new PathSerializer()).setPrettyPrinting().create();
-        String json = gson.toJson(drawView.getGraph());
-        prefsEditor.putString("Graph", json);
-        prefsEditor.commit();
+        final String json = gson.toJson(drawView.getGraph());
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setTitle(getResources().getString(R.string.popup_network_name));
+        final EditText input = new EditText(MainActivity.this);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        builder.setView(input);
+        builder.setPositiveButton(getResources().getString(R.string.confirmer), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                objectName = input.getText().toString();
+                prefsEditor.putString(objectName, json);
+                prefsEditor.commit();
+
+            }
+        });
+        builder.setNegativeButton(getResources().getString(R.string.annuler), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        builder.show();
     }
 
     public void upload_network(){
-        Gson gson = new GsonBuilder().registerTypeAdapter(CustomPath.class, new PathDeserializer()).create();
-        String json = mPrefs.getString("Graph", "");
-        Graph graph = gson.fromJson(json, Graph.class);
-        drawView.setGraph(graph);
-        drawView.invalidate();
+        final Gson gson = new GsonBuilder().registerTypeAdapter(CustomPath.class, new PathDeserializer()).create();
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setTitle(getResources().getString(R.string.popup_network));
+        Map<String,?> test = mPrefs.getAll();
+        final String[] choices = test.keySet().toArray(new String[0]);
+        builder.setItems(choices, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String json = mPrefs.getString(choices[which], "");
+                Graph graph = gson.fromJson(json, Graph.class);
+                drawView.setGraph(graph);
+                drawView.invalidate();
+            }
+        });
+        // create and show the alert dialog
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -327,5 +373,32 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
+    }
+
+    private void screenshot(){
+        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+        StrictMode.setVmPolicy(builder.build());
+        View view = drawView.getRootView();
+        Bitmap bitmap = Bitmap.createBitmap(view.getWidth(), view.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        view.draw(canvas);
+        File imagePath = new File(new File(Environment.getExternalStorageDirectory(), "Pictures"), "screenshot.png");
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(imagePath);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            fos.flush();
+            fos.close();
+            Intent sendEmailIntent = new Intent(Intent.ACTION_SEND);
+            sendEmailIntent.setType("image/png");
+            sendEmailIntent.putExtra(Intent.EXTRA_EMAIL, new String[]{"adress"});
+            sendEmailIntent.putExtra(Intent.EXTRA_SUBJECT, "subject");
+            sendEmailIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(imagePath));
+            startActivity(Intent.createChooser(sendEmailIntent, "Send email"));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

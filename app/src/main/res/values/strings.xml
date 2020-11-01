@@ -12,6 +12,9 @@
     <string name="popup_plan">Choisir un plan</string>
     <string name="import_image">Importer un plan</string>
     <string name="save_network">Sauvegarder le reseau</string>
-    <string name="upload_network">Charger un reseau reseau</string>
+    <string name="upload_network">Charger un reseau</string>
     <string name="share_mail">Envoyer par mail</string>
+    <string name="popup_network_name">Nom du reseau</string>
+    <string name="popup_network">Choisir un reseau</string>
+    <string name="send_mail">Envoyer par mail</string>
 </resources>

@@ -180,12 +180,16 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                                         pathToModify.moveTo(xTouch, yTouch);
                                         RectF rectObject2 = allObjects.get(object2);
                                         pathToModify.lineTo(rectObject2.left, rectObject2.top);
+                                        pathToModify.setStartPoints(xTouch,yTouch);
+                                        pathToModify.setFinalPoints(rectObject2.left, rectObject2.top);
                                     } else if (object2.equals(nameOfRect)) {
                                         CustomPath pathToModify = link.get(object2);
                                         pathToModify.reset();
                                         pathToModify.moveTo(xTouch, yTouch);
                                         RectF rectObject1 = allObjects.get(object1);
                                         pathToModify.lineTo(rectObject1.left, rectObject1.top);
+                                        pathToModify.setStartPoints(xTouch,yTouch);
+                                        pathToModify.setFinalPoints(rectObject1.left, rectObject1.top);
                                     }
                                 }
                             }
@@ -223,14 +227,8 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                         pathCreated.reset();
                         pathCreated.moveTo(aCoordinates[0],aCoordinates[1]);
                         pathCreated.lineTo(xTouch,yTouch);
-                        float[] initPoints = new float[2];
-                        initPoints[0] = aCoordinates[0];
-                        initPoints[1] = aCoordinates[1];
-                        pathCreated.addPathPoints(initPoints);
-                        float[] finalPoints = new float[2];
-                        finalPoints[0] = xTouch;
-                        finalPoints[1] = yTouch;
-                        pathCreated.addPathPoints(finalPoints);
+                        pathCreated.setStartPoints(aCoordinates[0],aCoordinates[1]);
+                        pathCreated.setFinalPoints(xTouch, yTouch);
                         System.out.println("un lien existe : "+pathExist(tmpRectName,nameTouchedRect));
                         displayConnexions();
                         if(!pathExist(tmpRectName,nameTouchedRect)){

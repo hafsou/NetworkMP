@@ -37,4 +37,9 @@
         android:orderInCategory="101"
         android:title="@string/modif_objets"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/send_mail"
+        android:orderInCategory="101"
+        android:title="@string/send_mail"
+        app:showAsAction="never" />
 </menu>
