@@ -12,11 +12,7 @@
         android:orderInCategory="101"
         android:title="@string/save_network"
         app:showAsAction="never" />
-    <item
-        android:id="@+id/share_mail"
-        android:orderInCategory="101"
-        android:title="@string/share_mail"
-        app:showAsAction="never" />
+
     <item
         android:id="@+id/upload_network"
         android:orderInCategory="101"

@@ -4,7 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -21,15 +21,13 @@ import java.util.HashMap;
 
 public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
     Paint paint;
-    private static int taille = 50;
-    private float[] lastTouchDownXY = new float[2];
+    private static int taille = 70;
     private SparseArray<RectF> mRectPointer = new SparseArray<RectF>();
     private SparseArray<CustomPath> mPathPointer = new SparseArray<CustomPath>();
     private Mode mode = Mode.OBJETS;
     private Graph graph;
     private ArrayList<CustomPath> pathTemporaryCreated;
     private String tmpRectName = "";
-    private String objectName;
     private String connexionName;
 
     public DrawView(Context context, AttributeSet attributeSet){
@@ -46,16 +44,30 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
         paint.setStyle(Paint.Style.FILL);
         paint.setStrokeWidth(4);
         HashMap<String,RectF> objects = graph.getObjects();
+        HashMap<String,Integer> objectsColor = graph.getObjectsColor();
+        HashMap<String,Bitmap> objectsIcons = graph.getObjectsIcons();
         HashMap<String, HashMap<String,CustomPath>> connexions = graph.getConnexions();
         for(String nameRect : objects.keySet()){
             RectF rect = objects.get(nameRect);
-            paint.setColor(Color.BLACK);
-            canvas.drawRect(rect,paint);
-            paint.setTextSize(40);
-            paint.setColor(Color.WHITE);
-            int indexDelimiter = nameRect.lastIndexOf("_");
-            String objectName = nameRect.substring(0,indexDelimiter);
-            canvas.drawText(objectName, rect.left, rect.bottom + 40, paint);
+            if(objectsColor.containsKey(nameRect)) {
+                int color = objectsColor.get(nameRect);
+                paint.setColor(color);
+            }else{
+                paint.setColor(Color.BLACK);
+            }
+            if(rect != null) {
+                if(objectsIcons.containsKey(nameRect)){
+                    Bitmap bitmap = objectsIcons.get(nameRect);
+                    canvas.drawBitmap(bitmap,rect.left,rect.top,paint);
+                }else{
+                    canvas.drawRect(rect, paint);
+                }
+                paint.setTextSize(40);
+                paint.setColor(Color.WHITE);
+                int indexDelimiter = nameRect.lastIndexOf("_");
+                String objectName = nameRect.substring(0, indexDelimiter);
+                canvas.drawText(objectName, rect.left, rect.bottom + 40, paint);
+            }
         }
         for(String object1 : connexions.keySet()){
             for(String object2 : connexions.get(object1).keySet()){

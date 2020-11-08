@@ -2,51 +2,35 @@ package fr.istic.mob.networkMP;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.content.Context;
-import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Rect;
+import android.graphics.Color;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
-
 import android.os.Environment;
 import android.os.StrictMode;
-import android.provider.MediaStore;
 import android.text.InputType;
-import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -61,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
     //to draw connection, object
     private DrawView drawView;
     private String objectName = null;
+    private String newObjectName = null;
     private Button choosePlan;
     private ListView listView;
     private ArrayAdapter<String> adapter;
@@ -81,9 +66,9 @@ public class MainActivity extends AppCompatActivity {
         drawView = findViewById(R.id.drawview);
         choosePlan = findViewById(R.id.button_choose_plan);
         plansImages = new HashMap<String,Drawable>();
-        plansImages.put("plan",getDrawable(R.drawable.plan));
-        plansImages.put("plan T2", getDrawable(R.drawable.plandeux));
-        plansImages.put("plan T3", getDrawable(R.drawable.plantrois));
+        plansImages.put(getResources().getString(R.string.default_map),getDrawable(R.drawable.plan));
+        plansImages.put(getResources().getString(R.string.map_t2), getDrawable(R.drawable.plandeux));
+        plansImages.put(getResources().getString(R.string.map_t3), getDrawable(R.drawable.plantrois));
         choosePlan.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -141,9 +126,9 @@ public class MainActivity extends AppCompatActivity {
         intent.setType("*/*");
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         try {
-            startActivityForResult(Intent.createChooser(intent, "Select a File to Upload"),FILE_SELECT_CODE);
+            startActivityForResult(Intent.createChooser(intent, getResources().getString(R.string.select_file_upload)),FILE_SELECT_CODE);
         } catch (android.content.ActivityNotFoundException ex) {
-            Toast.makeText(this, "Please install a File Manager.",Toast.LENGTH_LONG).show();
+            Toast.makeText(this, getResources().getString(R.string.install_file_manager),Toast.LENGTH_LONG).show();
         }
     }
 
@@ -184,19 +169,19 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.renitialiser_reseau:
-                renitialiserReseau();
+                reinitializeNetwork();
                 return true;
             case R.id.ajout_objets:
-                ajoutObjets();
+                addObjects();
                 return true;
             case R.id.ajout_connexions:
-                ajoutConnexions();
+                addConnexions();
                 return true;
             case R.id.modifications_objets_connexions:
-                modificationsObjetsConnexions();
+                modifyObjectsOrConnexions();
                 return true;
             case R.id.save_network:
-                sauvegarder_reseau();
+                saveNetwork();
                 return true;
             case R.id.upload_network:
                 upload_network();
@@ -208,12 +193,12 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void renitialiserReseau(){
+    public void reinitializeNetwork(){
         drawView.reinitializeGraph();
         drawView.invalidate();
     }
 
-    public void sauvegarder_reseau(){
+    public void saveNetwork(){
         final SharedPreferences.Editor prefsEditor = mPrefs.edit();
         Gson gson = new GsonBuilder().registerTypeAdapter(CustomPath.class, new PathSerializer()).setPrettyPrinting().create();
         final String json = gson.toJson(drawView.getGraph());
@@ -262,9 +247,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    public void ajoutConnexions(){
+    public void addConnexions(){
         drawView.setMode(Mode.CONNEXIONS);
-        //planAppartement
         drawView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
@@ -273,7 +257,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void modificationsObjetsConnexions(){
+    public void modifyObjectsOrConnexions(){
         drawView.setMode(Mode.MODIFICATIONS);
         drawView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
@@ -284,6 +268,7 @@ public class MainActivity extends AppCompatActivity {
                 RectF rectTouched = null;
                 final Graph graph = drawView.getGraph();
                 final HashMap<String,RectF> objects = graph.getObjects();
+
                 for(String nameRect : objects.keySet()){
                     RectF rect = objects.get(nameRect);
                     System.out.println("right = "+ rect.right+" left = "+rect.left+" top = "+ rect.top +" bottom = "+ rect.bottom);
@@ -296,24 +281,35 @@ public class MainActivity extends AppCompatActivity {
                 if(touchObject == true) {
                     // setup the alert builder
                     AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                    builder.setTitle("Choose action");  //traduction attention
+                    builder.setTitle(getResources().getString(R.string.choose_action));
 
                     // add a list
-                    String[] choices = {"delete object"};
+                    String[] choices = {getResources().getString(R.string.delete_object_action)
+                            ,getResources().getString(R.string.modify_label_action)
+                            ,getResources().getString(R.string.modify_color_action)
+                            , getResources().getString(R.string.choose_icon_action)};
+                    final RectF finalRectTouched = rectTouched;
                     builder.setItems(choices, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             switch (which) {
                                 case 0: // delete object
-                                    if(objectName != null) {
-                                        graph.deleteObjet(objectName);
-                                        drawView.invalidate();
-                                    }
+                                    graph.deleteObject(objectName);
+                                    drawView.invalidate();
+                                    break;
+                                case 1: //modify label
+                                    changeObjectName(objectName);
+                                    break;
+                                case 2: //modify color
+                                    changeObjectColor(objectName);
+                                    break;
+                                case 3: //choose icon
+                                    changeObjectIcon(objectName);
+                                    break;
                             }
                         }
                     });
 
-                    // create and show the alert dialog
                     AlertDialog dialog = builder.create();
                     dialog.show();
                 }
@@ -323,7 +319,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    public void ajoutObjets(){
+    public void addObjects(){
         drawView.setMode(Mode.OBJETS);
         drawView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
@@ -400,5 +396,150 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void changeObjectName(final String oldName){
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setTitle(getResources().getString(R.string.popup_title));
+        // Set up the input
+        final Graph graph = drawView.getGraph();
+        final EditText input = new EditText(MainActivity.this);
+        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        builder.setView(input);
+        final HashMap<String,RectF> objects = graph.getObjects();
+        final HashMap<String,Integer> objectsColor = graph.getObjectsColor();
+        // Set up the buttons
+        builder.setPositiveButton(getResources().getString(R.string.confirmer), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                newObjectName = input.getText().toString();
+                RectF rect = objects.get(oldName);
+                if(objectsColor.get(oldName) != null) {
+                    int colorToSave = objectsColor.get(oldName);
+                    objectsColor.remove(oldName);
+                    newObjectName = newObjectName + "_m" + objectName.split("_")[1]; //attention modifs a faire
+                    objectsColor.put(newObjectName, colorToSave);
+                    graph.setObjectsColor(objectsColor);
+                }
+                objects.remove(oldName);
+                newObjectName = newObjectName + "_m" + objectName.split("_")[1]; //attention modifs a faire
+                objects.put(newObjectName, rect);
+                graph.setObjects(objects);
+                drawView.invalidate();
+            }
+        });
+        builder.setNegativeButton(getResources().getString(R.string.annuler), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                newObjectName = null;
+                dialog.cancel();
+            }
+        });
+        builder.show();
+    }
+
+    private void changeObjectColor(final String objectName){
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setTitle(getResources().getString(R.string.popup_choose_color));
+        final Graph graph = drawView.getGraph();
+        final HashMap<String,Integer> objectsColor = graph.getObjectsColor();
+        // add a list
+        String[] choices = {getResources().getString(R.string.red)
+                ,getResources().getString(R.string.green)
+                ,getResources().getString(R.string.blue)
+                ,getResources().getString(R.string.orange)
+                ,getResources().getString(R.string.cyan)
+                ,getResources().getString(R.string.magenta)
+                ,getResources().getString(R.string.black)};
+        builder.setItems(choices, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which) {
+                    case 0:
+                        objectsColor.put(objectName,Color.RED);
+                        graph.setObjectsColor(objectsColor);
+                        drawView.invalidate();
+                        break;
+                    case 1:
+                        objectsColor.put(objectName,Color.GREEN);
+                        graph.setObjectsColor(objectsColor);
+                        drawView.invalidate();
+                        break;
+                    case 2:
+                        objectsColor.put(objectName,Color.BLUE);
+                        graph.setObjectsColor(objectsColor);
+                        drawView.invalidate();
+                        break;
+                    case 3:
+                        objectsColor.put(objectName,Color.rgb(255, 165, 0));
+                        graph.setObjectsColor(objectsColor);
+                        drawView.invalidate();
+                        break;
+                    case 4:
+                        objectsColor.put(objectName,Color.CYAN);
+                        graph.setObjectsColor(objectsColor);
+                        drawView.invalidate();
+                        break;
+                    case 5:
+                        objectsColor.put(objectName,Color.MAGENTA);
+                        graph.setObjectsColor(objectsColor);
+                        drawView.invalidate();
+                        break;
+                    case 6:
+                        objectsColor.put(objectName,Color.BLACK);
+                        graph.setObjectsColor(objectsColor);
+                        drawView.invalidate();
+                        break;
+
+                }
+            }
+        });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void changeObjectIcon(final String oldName){
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setTitle(getResources().getString(R.string.popup_choose_icon));
+        final Graph graph = drawView.getGraph();
+        final HashMap<String,Bitmap> objectsIcons = graph.getObjectsIcons();
+        // add a list
+        String[] choices = {getResources().getString(R.string.printer)
+                ,getResources().getString(R.string.television)
+                ,getResources().getString(R.string.laptop)};
+        builder.setItems(choices, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which) {
+                    case 0:
+                        objectsIcons.put(objectName,Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(),R.drawable.imprimante)
+                                ,graph.getSIZE()
+                                ,graph.getSIZE()
+                                ,false));
+                        graph.setObjectsIcons(objectsIcons);
+                        drawView.invalidate();
+                        break;
+                    case 1:
+                        objectsIcons.put(objectName, Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(),R.drawable.television)
+                                ,graph.getSIZE()
+                                ,graph.getSIZE()
+                                ,false));
+                        graph.setObjectsIcons(objectsIcons);
+                        drawView.invalidate();
+                        break;
+                    case 2:
+                        objectsIcons.put(objectName, Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(),R.drawable.ordinateur)
+                                ,graph.getSIZE()
+                                ,graph.getSIZE()
+                                ,false));
+                        graph.setObjectsIcons(objectsIcons);
+                        drawView.invalidate();
+                        break;
+                }
+            }
+        });
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 }

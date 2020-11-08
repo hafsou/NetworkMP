@@ -17,4 +17,26 @@
     <string name="popup_network_name">Nom du reseau</string>
     <string name="popup_network">Choisir un reseau</string>
     <string name="send_mail">Envoyer par mail</string>
+    <string name="default_map">Plan</string>
+    <string name="map_t2">Plan T2</string>
+    <string name="map_t3">Plan T3</string>
+    <string name="select_file_upload">Choisissez un fichier à télécharger</string>
+    <string name="install_file_manager">Merci d\'installer un gestionnaire de fichier</string>
+    <string name="choose_action">Choisir une action</string>
+    <string name="delete_object_action">Supprimer l\'objet</string>
+    <string name="modify_label_action">Modifier le nom</string>
+    <string name="modify_color_action">Modifier la couleur</string>
+    <string name="choose_icon_action">Choisir une icone</string>
+    <string name="popup_choose_color">Choisissez une couleur</string>
+    <string name="red">Rouge</string>
+    <string name="green">Vert</string>
+    <string name="blue">Bleu</string>
+    <string name="orange">Orange</string>
+    <string name="cyan">Cyan</string>
+    <string name="magenta">Magenta</string>
+    <string name="black">Noir</string>
+    <string name="popup_choose_icon">Choisissez l\'icone</string>
+    <string name="printer">Imprimante</string>
+    <string name="television">Television</string>
+    <string name="laptop">Ordinateur</string>
 </resources>
