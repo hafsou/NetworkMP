@@ -40,4 +40,13 @@
     <string name="printer">Printer</string>
     <string name="television">Television</string>
     <string name="laptop">Laptop</string>
+    <string name="delete_connection">Delete connection</string>
+    <string name="modify_connection_label">Modify connection label</string>
+    <string name="modify_connection_color">Modify connection color</string>
+    <string name="modify_connection_width">Modify connection width</string>
+    <string name="popup_connection_name">Connection name</string>
+    <string name="thin">Thin</string>
+    <string name="popup_connection_width">Choose the connection width</string>
+    <string name="medium">Medium</string>
+    <string name="large">Large</string>
 </resources>

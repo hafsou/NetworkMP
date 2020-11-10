@@ -8,35 +8,35 @@ import java.util.HashMap;
 public class Graph {
 
     private final static int SIZE = 70;
-    private int nbObject = 0;
-    private HashMap<String,RectF> objects;
-    private HashMap<String, HashMap<String,CustomPath>> connexions;
-    private HashMap<String, HashMap<String,String>> connexionsNames;
+    private int objectId = 0;
+    private HashMap<String,CustomRect> objects;
+    private HashMap<String, HashMap<String,CustomPath>> connections;
+    private HashMap<String, HashMap<String,ConnexionLabel>> connectionsNames;
     private HashMap<String, Integer> objectsColor;
     private HashMap<String, Bitmap> objectsIcons;
 
     public Graph(){
-        connexions = new HashMap<String, HashMap<String,CustomPath>>();
-        connexionsNames = new HashMap<String, HashMap<String,String>>();
-        objects = new HashMap<String,RectF>();
+        connections = new HashMap<String, HashMap<String,CustomPath>>();
+        connectionsNames = new HashMap<String, HashMap<String,ConnexionLabel>>();
+        objects = new HashMap<String,CustomRect>();
         objectsColor = new HashMap<String, Integer>();
         objectsIcons = new HashMap<String, Bitmap>();
     }
 
     public void addObjet(Context context, String objectName, float x, float y){
-        RectF rect = new RectF(x,y,x+SIZE,y+SIZE);
-        String finalObjectName = objectName+"_"+String.valueOf(nbObject);
+        CustomRect rect = new CustomRect(objectName,x,y,x+SIZE,y+SIZE);
+        String finalObjectName = "object_"+String.valueOf(objectId);
         objects.put(finalObjectName, rect);
-        nbObject++;
+        objectId++;
     }
 
     public void deleteObject(String objectName){
         this.objects.remove(objectName);
         HashMap<String, HashMap<String,CustomPath>> connexionsTmp = new HashMap<String, HashMap<String,CustomPath>>();
         //suppression des connexions associées
-        for(String object1 : connexions.keySet()){
-            for(String object2 : connexions.get(object1).keySet()){
-                HashMap<String,CustomPath> linkToObject2 = connexions.get(object1);
+        for(String object1 : connections.keySet()){
+            for(String object2 : connections.get(object1).keySet()){
+                HashMap<String,CustomPath> linkToObject2 = connections.get(object1);
                 if(linkToObject2 != null) {
                     if((!object1.equals(objectName) && !object2.equals(objectName))){
                         HashMap<String,CustomPath> tmp = connexionsTmp.get(object1);
@@ -52,50 +52,61 @@ public class Graph {
                 }
             }
         }
-        this.connexions = connexionsTmp;
-        this.nbObject--;
+        this.connections = connexionsTmp;
     }
 
-    public HashMap<String, RectF> getObjects() {
-        return objects;
-    }
-
-    public HashMap<String, HashMap<String, CustomPath>> getConnexions() {
-        return connexions;
-    }
-
-    public void reinitialize(){
-        objects = new HashMap<String,RectF>();
-        connexions = new HashMap<String, HashMap<String,CustomPath>>();
-        connexionsNames = new HashMap<String, HashMap<String,String>>();
-        nbObject = 0;
-    }
-
-    public void addConnexionName(String object1, String object2, String connexionName){
-        HashMap<String,String> link = this.connexionsNames.get(object1);
-        if(link != null){
-            link.put(object2,connexionName);
-            this.connexionsNames.put(object1, link);
+    public void deleteConnection(String nameRect1, String nameRect2){
+        HashMap<String,CustomPath> linkToObject2 = connections.get(nameRect1);
+        if(linkToObject2 != null){
+            linkToObject2.remove(nameRect2);
         }else{
-            link = this.connexionsNames.get(object2);
-            if(link != null){
-                link.put(object1, connexionName);
-                this.connexionsNames.put(object2, link);
-            }else{
-                link = new HashMap<String,String>();
-                link.put(object2,connexionName);
-                this.connexionsNames.put(object1, link);
+            linkToObject2 = connections.get(nameRect2);
+            if(linkToObject2 != null){
+                linkToObject2.remove(nameRect1);
             }
         }
     }
 
-    public String getConnexionName(String object1, String object2){
-        String result = "";
-        HashMap<String,String> link = this.connexionsNames.get(object1);
+    public HashMap<String, CustomRect> getObjects() {
+        return objects;
+    }
+
+    public HashMap<String, HashMap<String, CustomPath>> getConnexions() {
+        return connections;
+    }
+
+    public void reinitialize(){
+        objects = new HashMap<String,CustomRect>();
+        connections = new HashMap<String, HashMap<String,CustomPath>>();
+        connectionsNames = new HashMap<String, HashMap<String,ConnexionLabel>>();
+        objectId = 0;
+    }
+
+    public void addConnexionName(String object1, String object2, String connexionName){
+        HashMap<String,ConnexionLabel> link = this.connectionsNames.get(object1);
+        if(link != null){
+            link.put(object2, new ConnexionLabel(connexionName));
+            this.connectionsNames.put(object1, link);
+        }else{
+            link = this.connectionsNames.get(object2);
+            if(link != null){
+                link.put(object1, new ConnexionLabel(connexionName));
+                this.connectionsNames.put(object2, link);
+            }else{
+                link = new HashMap<String,ConnexionLabel>();
+                link.put(object2, new ConnexionLabel(connexionName));
+                this.connectionsNames.put(object1, link);
+            }
+        }
+    }
+
+    public ConnexionLabel getConnexionName(String object1, String object2){
+        ConnexionLabel result = null;
+        HashMap<String,ConnexionLabel> link = this.connectionsNames.get(object1);
         if(link != null) {
             result = link.get(object2);
         }else{
-            link = this.connexionsNames.get(object2);
+            link = this.connectionsNames.get(object2);
             if(link != null) {
                 result = link.get(object1);
             }
@@ -105,18 +116,18 @@ public class Graph {
 
     public boolean hasConnexionName(String object1, String object2){
         boolean hasName = false;
-        String name;
-        HashMap<String,String> link = this.connexionsNames.get(object1);
+        ConnexionLabel label;
+        HashMap<String,ConnexionLabel> link = this.connectionsNames.get(object1);
         if(link != null) {
-            name = link.get(object2);
-            if(name != null){
+            label = link.get(object2);
+            if(label != null){
                 hasName = true;
             }
         }else{
-            link = this.connexionsNames.get(object2);
+            link = this.connectionsNames.get(object2);
             if(link != null) {
-                name = link.get(object1);
-                if(name != null){
+                label = link.get(object1);
+                if(label != null){
                     hasName = true;
                 }
             }
@@ -128,10 +139,11 @@ public class Graph {
         return SIZE;
     }
 
-    public int getNbObject(){
-        return nbObject;
+    public int getObjectId() {
+        return objectId;
     }
-    public void setObjects(HashMap<String,RectF> objects){
+
+    public void setObjects(HashMap<String,CustomRect> objects){
         this.objects = objects;
     }
 
@@ -149,6 +161,10 @@ public class Graph {
 
     public void setObjectsIcons(HashMap<String, Bitmap> objectsIcons) {
         this.objectsIcons = objectsIcons;
+    }
+
+    public HashMap<String, HashMap<String, ConnexionLabel>> getConnectionsNames() {
+        return connectionsNames;
     }
 }
 

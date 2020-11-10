@@ -265,17 +265,38 @@ public class MainActivity extends AppCompatActivity {
                 final float x = lastTouchDownXY[0];
                 final float y = lastTouchDownXY[1];
                 boolean touchObject = false;
-                RectF rectTouched = null;
+                CustomRect rectTouched = null;
                 final Graph graph = drawView.getGraph();
-                final HashMap<String,RectF> objects = graph.getObjects();
-
+                final HashMap<String,CustomRect> objects = graph.getObjects();
+                final HashMap<String, HashMap<String,ConnexionLabel>> connectionNames = graph.getConnectionsNames();
+                HashMap<String, HashMap<String,CustomPath>> connections = graph.getConnexions();
+                String rect1ToDeleteTmp = null;
+                String rect2ToDeleteTmp = null;
+                CustomPath customPathNameTouched = null;
+                ConnexionLabel connectionLabelTouched = null;
+                boolean touchConnectionLabel = false;
+                System.out.println("TOUCH HERE x : "+ x + " y : "+y);
                 for(String nameRect : objects.keySet()){
-                    RectF rect = objects.get(nameRect);
-                    System.out.println("right = "+ rect.right+" left = "+rect.left+" top = "+ rect.top +" bottom = "+ rect.bottom);
+                    CustomRect rect = objects.get(nameRect);
                     if(x<= rect.right && x>= rect.left && y>= rect.top && y<=rect.bottom){
                         touchObject = true;
                         rectTouched = rect;
                         objectName = nameRect;
+                    }
+                }
+                for(String rect1 : connectionNames.keySet()){
+                    HashMap<String,ConnexionLabel> connexionToRect2 = connectionNames.get(rect1);
+                    for(String rect2 : connexionToRect2.keySet()){
+                        ConnexionLabel connexionLabel = connexionToRect2.get(rect2);
+                        System.out.println(connexionLabel.getLabel());
+                        System.out.println("h : "+connexionLabel.getHeight() + " x : "+connexionLabel.getX() + " y : "+connexionLabel.getY() +" w :"+connexionLabel.getWidth());
+                        if(x<= connexionLabel.getHeight() && x>= connexionLabel.getX() && y<= connexionLabel.getY() && y>=connexionLabel.getWidth()){
+                            touchConnectionLabel = true;
+                            connectionLabelTouched = connexionLabel;
+                            customPathNameTouched = connections.get(rect1).get(rect2);
+                            rect1ToDeleteTmp = rect1;
+                            rect2ToDeleteTmp = rect2;
+                        }
                     }
                 }
                 if(touchObject == true) {
@@ -288,7 +309,7 @@ public class MainActivity extends AppCompatActivity {
                             ,getResources().getString(R.string.modify_label_action)
                             ,getResources().getString(R.string.modify_color_action)
                             , getResources().getString(R.string.choose_icon_action)};
-                    final RectF finalRectTouched = rectTouched;
+                    final CustomRect finalRectTouched = rectTouched;
                     builder.setItems(choices, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -312,6 +333,43 @@ public class MainActivity extends AppCompatActivity {
 
                     AlertDialog dialog = builder.create();
                     dialog.show();
+                }else if(touchConnectionLabel == true){
+                    // setup the alert builder
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                    builder.setTitle(getResources().getString(R.string.choose_action));
+
+                    // add a list
+                    String[] choices = {getResources().getString(R.string.delete_connection)
+                            ,getResources().getString(R.string.modify_connection_label)
+                            ,getResources().getString(R.string.modify_connection_color)
+                            , getResources().getString(R.string.modify_connection_width)};
+                    final ConnexionLabel finalConnexionLabelTouched = connectionLabelTouched;
+                    final CustomPath finalCustomPathNameTouched = customPathNameTouched;
+                    final String finalRect1ToDeleteTmp = rect1ToDeleteTmp;
+                    final String finalRect2ToDeleteTmp = rect2ToDeleteTmp;
+                    builder.setItems(choices, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            switch (which) {
+                                case 0: // delete object
+                                    graph.deleteConnection(finalRect1ToDeleteTmp, finalRect2ToDeleteTmp);
+                                    drawView.invalidate();
+                                    break;
+                                case 1: //modify connection label
+                                    changeConnectionLabel(finalConnexionLabelTouched);
+                                    break;
+                                case 2: //modify connection color
+                                    changeConnectionColor(finalCustomPathNameTouched);
+                                    break;
+                                case 3: //modify connection width
+                                    changeConnectionWidth(finalCustomPathNameTouched);
+                                    break;
+                            }
+                        }
+                    });
+
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
                 }
                 return true;
             }
@@ -327,12 +385,11 @@ public class MainActivity extends AppCompatActivity {
                 final float x = lastTouchDownXY[0];
                 final float y = lastTouchDownXY[1];
                 boolean touchObject = false;
-                RectF rectToMove = null;
+                CustomRect rectToMove = null;
                 final Graph graph = drawView.getGraph();
-                HashMap<String,RectF> objects = graph.getObjects();
+                HashMap<String,CustomRect> objects = graph.getObjects();
                 for(String nameRect : objects.keySet()){
-                    RectF rect = objects.get(nameRect);
-                    System.out.println("right = "+ rect.right+" left = "+rect.left+" top = "+ rect.top +" bottom = "+ rect.bottom);
+                    CustomRect rect = objects.get(nameRect);
                     if(x<= rect.right && x>= rect.left && y>= rect.top && y<=rect.bottom){
                         touchObject = true;
                         rectToMove = rect;
@@ -407,25 +464,15 @@ public class MainActivity extends AppCompatActivity {
         // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
-        final HashMap<String,RectF> objects = graph.getObjects();
+        final HashMap<String,CustomRect> objects = graph.getObjects();
         final HashMap<String,Integer> objectsColor = graph.getObjectsColor();
         // Set up the buttons
         builder.setPositiveButton(getResources().getString(R.string.confirmer), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 newObjectName = input.getText().toString();
-                RectF rect = objects.get(oldName);
-                if(objectsColor.get(oldName) != null) {
-                    int colorToSave = objectsColor.get(oldName);
-                    objectsColor.remove(oldName);
-                    newObjectName = newObjectName + "_m" + objectName.split("_")[1]; //attention modifs a faire
-                    objectsColor.put(newObjectName, colorToSave);
-                    graph.setObjectsColor(objectsColor);
-                }
-                objects.remove(oldName);
-                newObjectName = newObjectName + "_m" + objectName.split("_")[1]; //attention modifs a faire
-                objects.put(newObjectName, rect);
-                graph.setObjects(objects);
+                CustomRect rect = objects.get(oldName);
+                rect.setName(newObjectName);
                 drawView.invalidate();
             }
         });
@@ -536,6 +583,117 @@ public class MainActivity extends AppCompatActivity {
                         graph.setObjectsIcons(objectsIcons);
                         drawView.invalidate();
                         break;
+                }
+            }
+        });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void changeConnectionLabel(final ConnexionLabel connexionLabel){
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setTitle(getResources().getString(R.string.popup_connection_name));
+        // Set up the input
+        final Graph graph = drawView.getGraph();
+        final EditText input = new EditText(MainActivity.this);
+        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        builder.setView(input);
+        // Set up the buttons
+        builder.setPositiveButton(getResources().getString(R.string.confirmer), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String newConnexionLabelName = input.getText().toString();
+                connexionLabel.setLabel(newConnexionLabelName);
+                drawView.invalidate();
+            }
+        });
+        builder.setNegativeButton(getResources().getString(R.string.annuler), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        builder.show();
+    }
+
+    private void changeConnectionColor(final CustomPath customPath){
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setTitle(getResources().getString(R.string.popup_choose_color));
+        final Graph graph = drawView.getGraph();
+        final HashMap<String,Integer> objectsColor = graph.getObjectsColor();
+        // add a list
+        String[] choices = {getResources().getString(R.string.red)
+                ,getResources().getString(R.string.green)
+                ,getResources().getString(R.string.blue)
+                ,getResources().getString(R.string.orange)
+                ,getResources().getString(R.string.cyan)
+                ,getResources().getString(R.string.magenta)
+                ,getResources().getString(R.string.black)};
+        builder.setItems(choices, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which) {
+                    case 0:
+                        customPath.setColor(Color.RED);
+                        drawView.invalidate();
+                        break;
+                    case 1:
+                        customPath.setColor(Color.GREEN);
+                        drawView.invalidate();
+                        break;
+                    case 2:
+                        customPath.setColor(Color.BLUE);
+                        drawView.invalidate();
+                        break;
+                    case 3:
+                        customPath.setColor(Color.rgb(255, 165, 0));
+                        drawView.invalidate();
+                        break;
+                    case 4:
+                        customPath.setColor(Color.CYAN);
+                        drawView.invalidate();
+                        break;
+                    case 5:
+                        customPath.setColor(Color.MAGENTA);
+                        drawView.invalidate();
+                        break;
+                    case 6:
+                        customPath.setColor(Color.BLACK);
+                        drawView.invalidate();
+                        break;
+
+                }
+            }
+        });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void changeConnectionWidth(final CustomPath customPath){
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setTitle(getResources().getString(R.string.popup_connection_width));
+        final Graph graph = drawView.getGraph();
+        final HashMap<String,Integer> objectsColor = graph.getObjectsColor();
+        // add a list
+        String[] choices = {getResources().getString(R.string.thin)
+                ,getResources().getString(R.string.medium)
+                ,getResources().getString(R.string.large)};
+        builder.setItems(choices, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which) {
+                    case 0:
+                        customPath.setStrokeWidth(5);
+                        drawView.invalidate();
+                        break;
+                    case 1:
+                        customPath.setStrokeWidth(10);
+                        drawView.invalidate();
+                        break;
+                    case 2:
+                        customPath.setStrokeWidth(15);
+                        drawView.invalidate();
                 }
             }
         });

@@ -39,4 +39,13 @@
     <string name="printer">Imprimante</string>
     <string name="television">Television</string>
     <string name="laptop">Ordinateur</string>
+    <string name="delete_connection">Supprimer la connection</string>
+    <string name="modify_connection_label">Modifier le nom de la connection</string>
+    <string name="modify_connection_color">Modifier la couleur de la connection</string>
+    <string name="modify_connection_width">Modifier l\'épaisseur de la connection</string>
+    <string name="popup_connection_name">Nom de la connection</string>
+    <string name="popup_connection_width">Choisir l\'épaisseur de la connection</string>
+    <string name="thin">Fin</string>
+    <string name="medium">Moyen</string>
+    <string name="large">Large</string>
 </resources>

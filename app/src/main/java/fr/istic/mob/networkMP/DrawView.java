@@ -22,7 +22,7 @@ import java.util.HashMap;
 public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
     Paint paint;
     private static int taille = 70;
-    private SparseArray<RectF> mRectPointer = new SparseArray<RectF>();
+    private SparseArray<CustomRect> mRectPointer = new SparseArray<CustomRect>();
     private SparseArray<CustomPath> mPathPointer = new SparseArray<CustomPath>();
     private Mode mode = Mode.OBJETS;
     private Graph graph;
@@ -43,12 +43,12 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
         paint.setColor(Color.BLACK);
         paint.setStyle(Paint.Style.FILL);
         paint.setStrokeWidth(4);
-        HashMap<String,RectF> objects = graph.getObjects();
+        HashMap<String,CustomRect> objects = graph.getObjects();
         HashMap<String,Integer> objectsColor = graph.getObjectsColor();
         HashMap<String,Bitmap> objectsIcons = graph.getObjectsIcons();
         HashMap<String, HashMap<String,CustomPath>> connexions = graph.getConnexions();
         for(String nameRect : objects.keySet()){
-            RectF rect = objects.get(nameRect);
+            CustomRect rect = objects.get(nameRect);
             if(objectsColor.containsKey(nameRect)) {
                 int color = objectsColor.get(nameRect);
                 paint.setColor(color);
@@ -64,9 +64,7 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                 }
                 paint.setTextSize(40);
                 paint.setColor(Color.WHITE);
-                int indexDelimiter = nameRect.lastIndexOf("_");
-                String objectName = nameRect.substring(0, indexDelimiter);
-                canvas.drawText(objectName, rect.left, rect.bottom + 40, paint);
+                canvas.drawText(rect.getName(), rect.left, rect.bottom + 40, paint);
             }
         }
         for(String object1 : connexions.keySet()){
@@ -77,20 +75,23 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                 HashMap<String,CustomPath> linkToObject2 = connexions.get(object1);
                 if(linkToObject2 != null) {
                     CustomPath pathToDraw = linkToObject2.get(object2);
+                    paint.setColor(pathToDraw.getColor());
+                    paint.setStrokeWidth(pathToDraw.getStrokeWidth());
                     System.out.println("DESSIN : " + object1 + " --- " + object2);
                     canvas.drawPath(pathToDraw, paint);
                     if (graph.hasConnexionName(object1, object2)) {
                         paint.setStyle(Paint.Style.FILL);
                         paint.setTextSize(40);
                         paint.setColor(Color.WHITE);
-                        String connexionName = graph.getConnexionName(object1, object2);
-                        System.out.println("Connexion name : "+connexionName);
+                        ConnexionLabel connexionLabel = graph.getConnexionName(object1, object2);
                         PathMeasure pm = new PathMeasure(pathToDraw, false);
                         //coordinates will be here
                         float aCoordinates[] = {0f, 0f};
                         //get point from the middle
                         pm.getPosTan(pm.getLength() * 0.5f, aCoordinates, null);
-                        canvas.drawText(connexionName, aCoordinates[0], aCoordinates[1], paint);
+                        canvas.drawText(connexionLabel.getLabel(), aCoordinates[0], aCoordinates[1], paint);
+                        connexionLabel.setX(aCoordinates[0]);
+                        connexionLabel.setY(aCoordinates[1]);
                     }
                 }
             }
@@ -108,7 +109,7 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
     public boolean onTouchEvent(MotionEvent event) {
         boolean handled = false;
 
-        RectF touchedRect;
+        CustomRect touchedRect;
         CustomPath pathCreated;
         String nameTouchedRect;
         int xTouch;
@@ -164,7 +165,7 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
             case MotionEvent.ACTION_MOVE:
                 final int pointerCount = event.getPointerCount();
                 HashMap<String, HashMap<String,CustomPath>> theConnexions = graph.getConnexions();
-                HashMap<String,RectF> allObjects = graph.getObjects();
+                HashMap<String,CustomRect> allObjects = graph.getObjects();
                 System.out.println("Move");
                 for (actionIndex = 0; actionIndex < pointerCount; actionIndex++) {
                     // Some pointer has moved, search it by pointer id
@@ -190,7 +191,7 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                                         CustomPath pathToModify = link.get(object2);
                                         pathToModify.reset();
                                         pathToModify.moveTo(xTouch, yTouch);
-                                        RectF rectObject2 = allObjects.get(object2);
+                                        CustomRect rectObject2 = allObjects.get(object2);
                                         pathToModify.lineTo(rectObject2.left, rectObject2.top);
                                         pathToModify.setStartPoints(xTouch,yTouch);
                                         pathToModify.setFinalPoints(rectObject2.left, rectObject2.top);
@@ -198,7 +199,7 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                                         CustomPath pathToModify = link.get(object2);
                                         pathToModify.reset();
                                         pathToModify.moveTo(xTouch, yTouch);
-                                        RectF rectObject1 = allObjects.get(object1);
+                                        CustomRect rectObject1 = allObjects.get(object1);
                                         pathToModify.lineTo(rectObject1.left, rectObject1.top);
                                         pathToModify.setStartPoints(xTouch,yTouch);
                                         pathToModify.setFinalPoints(rectObject1.left, rectObject1.top);
@@ -397,11 +398,11 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
     }
 
 
-    private RectF getTouchedRect(final int xTouch, final int yTouch) {
-        RectF touched = null;
-        HashMap<String,RectF> objects = graph.getObjects();
+    private CustomRect getTouchedRect(final int xTouch, final int yTouch) {
+        CustomRect touched = null;
+        HashMap<String,CustomRect> objects = graph.getObjects();
         for (String nameRect : objects.keySet()) {
-            RectF rect = objects.get(nameRect);
+            CustomRect rect = objects.get(nameRect);
             if (xTouch<= rect.right && xTouch>= rect.left && yTouch>= rect.top && yTouch<=rect.bottom) {
                 touched = rect;
                 break;
@@ -412,9 +413,9 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
 
     private String getNameTouchedRect(final int xTouch, final int yTouch){
         String touched = null;
-        HashMap<String,RectF> objects = graph.getObjects();
+        HashMap<String,CustomRect> objects = graph.getObjects();
         for (String nameRect : objects.keySet()) {
-            RectF rect = objects.get(nameRect);
+            CustomRect rect = objects.get(nameRect);
             if (xTouch<= rect.right && xTouch>= rect.left && yTouch>= rect.top && yTouch<=rect.bottom) {
                 touched = nameRect;
                 break;
