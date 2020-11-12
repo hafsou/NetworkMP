@@ -707,6 +707,5 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("ClickableViewAccessibility")
     private void curveConnections(){
         drawView.setMode(Mode.CURVES);
-
     }
 }

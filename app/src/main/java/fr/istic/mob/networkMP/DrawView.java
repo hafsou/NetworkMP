@@ -206,7 +206,12 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                                         pathToModify.reset();
                                         pathToModify.moveTo(xTouch, yTouch);
                                         CustomRect rectObject2 = allObjects.get(object2);
-                                        pathToModify.lineTo(rectObject2.left, rectObject2.top);
+                                        if(pathToModify.isBent()){
+                                            //calcul du nouveau point de controle
+                                            pathToModify.quadTo(0,0,rectObject2.left, rectObject2.top);
+                                        }else {
+                                            pathToModify.lineTo(rectObject2.left, rectObject2.top);
+                                        }
                                         pathToModify.setStartPoints(xTouch,yTouch);
                                         pathToModify.setFinalPoints(rectObject2.left, rectObject2.top);
                                     } else if (object2.equals(nameOfRect)) {
@@ -232,9 +237,23 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                             float oldYStart = pathTouched.getyStart();
                             float oldXFinal = pathTouched.getxFinal();
                             float oldYFinal = pathTouched.getyFinal();
+                            CustomPath tmp = new CustomPath();
+                            tmp.moveTo(oldXStart,oldYStart);
+                            tmp.lineTo(oldXFinal,oldYFinal);
+                            PathMeasure pm = new PathMeasure(tmp, false);
+                            //coordinates will be here
+                            float middleCoord[] = {0f, 0f};
+                            //get point from the middle
+                            pm.getPosTan(pm.getLength() * 0.5f, middleCoord, null);
                             pathTouched.reset();
                             pathTouched.moveTo(oldXStart, oldYStart);
-                            pathTouched.quadTo(xTouch,yTouch,oldXFinal,oldYFinal); //calcul a realiser car courbe de bezier, avec le point de controle
+                            double distance = Math.sqrt(Math.pow(xTouch - middleCoord[0] , 2) + Math.pow(yTouch - middleCoord[1], 2));
+                            System.out.println(distance);
+                            float tmp1 = Float.parseFloat(String.valueOf(distance));
+                            pathTouched.quadTo(xTouch,yTouch-tmp1,oldXFinal,oldYFinal); //calcul a realiser car courbe de bezier, avec le point de controle
+                            pathTouched.setBent(true);
+                            pathTouched.setxControl(xTouch);
+                            pathTouched.setyControl(yTouch);
                         }
                     }
                 }

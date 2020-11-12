@@ -11,14 +11,20 @@ public class CustomPath extends Path {
     private float yFinal;
     private int color;
     private int strokeWidth;
+    private boolean isBent;
+    private float xControl;
+    private float yControl;
 
     public CustomPath(){
         this.xStart = 0;
         this.yStart = 0;
         this.xFinal = 0;
         this.yFinal = 0;
+        this.xControl = 0;
+        this.yControl = 0;
         this.color = Color.BLACK;
         this.strokeWidth = 10;
+        this.isBent = false;
     }
 
     public CustomPath(float xStart, float yStart, float xFinal, float yFinal){
@@ -28,6 +34,9 @@ public class CustomPath extends Path {
         this.yFinal = yFinal;
         this.color = Color.BLACK;
         this.strokeWidth = 10;
+        this.isBent = false;
+        this.xControl = 0;
+        this.yControl = 0;
     }
 
     public void setStartPoints(float xStart, float yStart){
@@ -76,5 +85,29 @@ public class CustomPath extends Path {
 
     public void setStrokeWidth(int strokeWidth) {
         this.strokeWidth = strokeWidth;
+    }
+
+    public void setBent(boolean bent) {
+        isBent = bent;
+    }
+
+    public boolean isBent() {
+        return isBent;
+    }
+
+    public float getxControl() {
+        return xControl;
+    }
+
+    public float getyControl() {
+        return yControl;
+    }
+
+    public void setxControl(float xControl) {
+        this.xControl = xControl;
+    }
+
+    public void setyControl(float yControl) {
+        this.yControl = yControl;
     }
 }
