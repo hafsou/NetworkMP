@@ -20,10 +20,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
+
     Paint paint;
     private static int taille = 70;
     private SparseArray<CustomRect> mRectPointer = new SparseArray<CustomRect>();
     private SparseArray<CustomPath> mPathPointer = new SparseArray<CustomPath>();
+    private SparseArray<CustomPath> mPathTouchedPointer = new SparseArray<CustomPath>();
     private Mode mode = Mode.OBJETS;
     private Graph graph;
     private ArrayList<CustomPath> pathTemporaryCreated;
@@ -40,33 +42,10 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
 
     @Override
     public void onDraw(Canvas canvas) {
-        paint.setColor(Color.BLACK);
-        paint.setStyle(Paint.Style.FILL);
-        paint.setStrokeWidth(4);
         HashMap<String,CustomRect> objects = graph.getObjects();
         HashMap<String,Integer> objectsColor = graph.getObjectsColor();
         HashMap<String,Bitmap> objectsIcons = graph.getObjectsIcons();
         HashMap<String, HashMap<String,CustomPath>> connexions = graph.getConnexions();
-        for(String nameRect : objects.keySet()){
-            CustomRect rect = objects.get(nameRect);
-            if(objectsColor.containsKey(nameRect)) {
-                int color = objectsColor.get(nameRect);
-                paint.setColor(color);
-            }else{
-                paint.setColor(Color.BLACK);
-            }
-            if(rect != null) {
-                if(objectsIcons.containsKey(nameRect)){
-                    Bitmap bitmap = objectsIcons.get(nameRect);
-                    canvas.drawBitmap(bitmap,rect.left,rect.top,paint);
-                }else{
-                    canvas.drawRect(rect, paint);
-                }
-                paint.setTextSize(40);
-                paint.setColor(Color.WHITE);
-                canvas.drawText(rect.getName(), rect.left, rect.bottom + 40, paint);
-            }
-        }
         for(String object1 : connexions.keySet()){
             for(String object2 : connexions.get(object1).keySet()){
                 paint.setColor(Color.BLACK);
@@ -97,6 +76,29 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
             }
         }
         paint.setColor(Color.BLACK);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setStrokeWidth(4);
+        for(String nameRect : objects.keySet()){
+            CustomRect rect = objects.get(nameRect);
+            if(objectsColor.containsKey(nameRect)) {
+                int color = objectsColor.get(nameRect);
+                paint.setColor(color);
+            }else{
+                paint.setColor(Color.BLACK);
+            }
+            if(rect != null) {
+                if(objectsIcons.containsKey(nameRect)){
+                    Bitmap bitmap = objectsIcons.get(nameRect);
+                    canvas.drawBitmap(bitmap,rect.left,rect.top,paint);
+                }else{
+                    canvas.drawRect(rect, paint);
+                }
+                paint.setTextSize(40);
+                paint.setColor(Color.WHITE);
+                canvas.drawText(rect.getName(), rect.left, rect.bottom + 40, paint);
+            }
+        }
+        paint.setColor(Color.BLACK);
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(10);
         for(CustomPath CustomPath: pathTemporaryCreated) {
@@ -108,7 +110,7 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         boolean handled = false;
-
+        CustomPath pathTouched;
         CustomRect touchedRect;
         CustomPath pathCreated;
         String nameTouchedRect;
@@ -122,6 +124,7 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                 // it's the first pointer, so clear all existing pointers data
                 clearRectPointer();
                 clearPathPointer();
+                clearPathTouchedPointer();
                 xTouch = (int) event.getX(0);
                 yTouch = (int) event.getY(0);
                 // check if we've touched inside some rectangle
@@ -159,6 +162,16 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                     }
                 }else if(mode == Mode.MODIFICATIONS){
                     setLongClickable(true);
+                }else if(mode == Mode.CURVES){
+                    pathTouched = getTouchedPath(xTouch,yTouch);
+                    if(pathTouched != null){
+                        setLongClickable(false);
+                        this.getParent().requestDisallowInterceptTouchEvent(true);
+                        this.getParent().getParent().requestDisallowInterceptTouchEvent(true);
+                        mPathTouchedPointer.put(event.getPointerId(0), pathTouched);
+                        invalidate();
+                        handled = true;
+                    }
                 }
                 break;
 
@@ -176,6 +189,7 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
 
                     touchedRect = mRectPointer.get(pointerId);
                     pathCreated = mPathPointer.get(pointerId);
+                    pathTouched = mPathTouchedPointer.get(pointerId);
                     if (mode == Mode.OBJETS) {
                         if (null != touchedRect) {
                             touchedRect.left = xTouch;
@@ -208,20 +222,28 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                             }
                         }
                     } else if (mode == Mode.CONNEXIONS) {
-                        if (null != pathCreated) {
+                        if (pathCreated != null) {
                             pathCreated.lineTo(xTouch, yTouch);
                             pathTemporaryCreated.get(0).lineTo(xTouch, yTouch);
                         }
+                    }else if(mode == Mode.CURVES){
+                        if(pathTouched != null){
+                            float oldXStart = pathTouched.getxStart();
+                            float oldYStart = pathTouched.getyStart();
+                            float oldXFinal = pathTouched.getxFinal();
+                            float oldYFinal = pathTouched.getyFinal();
+                            pathTouched.reset();
+                            pathTouched.moveTo(oldXStart, oldYStart);
+                            pathTouched.quadTo(xTouch,yTouch,oldXFinal,oldYFinal); //calcul a realiser car courbe de bezier, avec le point de controle
+                        }
                     }
                 }
-
                 invalidate();
                 handled = true;
                 break;
 
             case MotionEvent.ACTION_UP:   //relachement du doigt sr l'ecran
                 setLongClickable(true);
-                //draw the CustomPath only if the last position is an another object
                 xTouch = (int) event.getX(0);
                 yTouch = (int) event.getY(0);
                 // check if we've touched inside some rectangle
@@ -231,6 +253,7 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                 if(mode == Mode.CONNEXIONS){
                     pointerId = event.getPointerId(actionIndex);
                     pathCreated = mPathPointer.get(pointerId);
+                    //draw the CustomPath only if the last position is an another object
                     if(touchedRect != null && nameTouchedRect != tmpRectName){
                         PathMeasure pm = new PathMeasure(pathCreated, false);
                         //coordinates will be here
@@ -242,7 +265,6 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                         pathCreated.lineTo(xTouch,yTouch);
                         pathCreated.setStartPoints(aCoordinates[0],aCoordinates[1]);
                         pathCreated.setFinalPoints(xTouch, yTouch);
-                        System.out.println("un lien existe : "+pathExist(tmpRectName,nameTouchedRect));
                         displayConnexions();
                         if(!pathExist(tmpRectName,nameTouchedRect)){
                             if(connexions.size() == 0){
@@ -287,6 +309,7 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
 
                 clearRectPointer();
                 clearPathPointer();
+                clearPathTouchedPointer();
                 invalidate();
                 handled = true;
                 break;
@@ -297,6 +320,7 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
 
                 mRectPointer.remove(pointerId);
                 mPathPointer.remove(pointerId);
+                mPathTouchedPointer.remove(pointerId);
                 invalidate();
                 handled = true;
                 break;
@@ -397,6 +421,10 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
         mPathPointer.clear();
     }
 
+    private void clearPathTouchedPointer() {
+        System.out.println("clearPathTouchedPointer");
+        mPathTouchedPointer.clear();
+    }
 
     private CustomRect getTouchedRect(final int xTouch, final int yTouch) {
         CustomRect touched = null;
@@ -409,6 +437,24 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
             }
         }
         return touched;
+    }
+
+    private CustomPath getTouchedPath(final int x, final int y){
+        CustomPath customPathNameTouched = null;
+        HashMap<String, HashMap<String,ConnexionLabel>> connectionNames = graph.getConnectionsNames();
+        HashMap<String, HashMap<String,CustomPath>> connections = graph.getConnexions();
+        for(String rect1 : connectionNames.keySet()){
+            HashMap<String,ConnexionLabel> connexionToRect2 = connectionNames.get(rect1);
+            for(String rect2 : connexionToRect2.keySet()){
+                ConnexionLabel connexionLabel = connexionToRect2.get(rect2);
+                System.out.println(connexionLabel.getLabel());
+                System.out.println("h : "+connexionLabel.getHeight() + " x : "+connexionLabel.getX() + " y : "+connexionLabel.getY() +" w :"+connexionLabel.getWidth());
+                if(x<= connexionLabel.getHeight() && x>= connexionLabel.getX() && y<= connexionLabel.getY() && y>=connexionLabel.getWidth()){
+                    customPathNameTouched = connections.get(rect1).get(rect2);
+                }
+            }
+        }
+        return customPathNameTouched;
     }
 
     private String getNameTouchedRect(final int xTouch, final int yTouch){

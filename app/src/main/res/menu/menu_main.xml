@@ -38,4 +38,9 @@
         android:orderInCategory="101"
         android:title="@string/send_mail"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/curve_connections"
+        android:orderInCategory="101"
+        android:title="@string/curve_connections"
+        app:showAsAction="never" />
 </menu>

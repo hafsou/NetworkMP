@@ -1,5 +1,5 @@
 package fr.istic.mob.networkMP;
 
 public enum Mode {
-    OBJETS, CONNEXIONS, MODIFICATIONS;
+    OBJETS, CONNEXIONS, MODIFICATIONS, CURVES;
 }

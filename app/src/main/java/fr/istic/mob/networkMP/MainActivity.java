@@ -189,6 +189,9 @@ public class MainActivity extends AppCompatActivity {
             case R.id.send_mail:
                 screenshot();
                 return true;
+            case R.id.curve_connections:
+                curveConnections();
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -699,5 +702,11 @@ public class MainActivity extends AppCompatActivity {
         });
         AlertDialog dialog = builder.create();
         dialog.show();
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private void curveConnections(){
+        drawView.setMode(Mode.CURVES);
+
     }
 }
