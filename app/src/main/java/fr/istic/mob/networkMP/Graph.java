@@ -1,41 +1,44 @@
 package fr.istic.mob.networkMP;
 
 import android.content.Context;
-import android.graphics.Color;
+import android.graphics.Bitmap;
 import android.graphics.RectF;
 import java.util.HashMap;
 
 public class Graph {
 
-    private static int taille = 50;
-    private int nbObjet = 0;
-    private HashMap<String,RectF> objects;
-    private HashMap<String, HashMap<String,CustomPath>> connexions;
-    private HashMap<String, HashMap<String,String>> connexionsNames;
-    private HashMap<String, Color> objectsColor;
+    public final static int SIZE = 60;
+    private int objectId = 0;
+    private HashMap<String,CustomRect> objects;
+    private HashMap<String, HashMap<String,CustomPath>> connections;
+    private HashMap<String, HashMap<String,ConnexionLabel>> connectionsNames;
+    private HashMap<String, Integer> objectsColor;
+    private HashMap<String, Bitmap> objectsIcons;
 
     public Graph(){
-        connexions = new HashMap<String, HashMap<String,CustomPath>>();
-        connexionsNames = new HashMap<String, HashMap<String,String>>();
-        objects = new HashMap<String,RectF>();
+        connections = new HashMap<String, HashMap<String,CustomPath>>();
+        connectionsNames = new HashMap<String, HashMap<String,ConnexionLabel>>();
+        objects = new HashMap<String,CustomRect>();
+        objectsColor = new HashMap<String, Integer>();
+        objectsIcons = new HashMap<String, Bitmap>();
     }
 
-    public void addObjet(Context context, String nomObjet, float x, float y){
-        RectF rect = new RectF(x,y,x+taille,y+taille);
-        String nomObjetFinal = nomObjet+"_"+String.valueOf(nbObjet);
-        objects.put(nomObjetFinal, rect);
-        nbObjet++;
+    public void addObjet(Context context, String objectName, float x, float y){
+        CustomRect rect = new CustomRect(objectName,x,y,x+SIZE,y+SIZE);
+        String finalObjectName = "object_"+String.valueOf(objectId);
+        objects.put(finalObjectName, rect);
+        objectId++;
     }
 
-    public void deleteObjet(String nomObjet){
-        objects.remove(nomObjet);
+    public void deleteObject(String objectName){
+        this.objects.remove(objectName);
         HashMap<String, HashMap<String,CustomPath>> connexionsTmp = new HashMap<String, HashMap<String,CustomPath>>();
         //suppression des connexions associées
-        for(String object1 : connexions.keySet()){
-            for(String object2 : connexions.get(object1).keySet()){
-                HashMap<String,CustomPath> linkToObject2 = connexions.get(object1);
+        for(String object1 : connections.keySet()){
+            for(String object2 : connections.get(object1).keySet()){
+                HashMap<String,CustomPath> linkToObject2 = connections.get(object1);
                 if(linkToObject2 != null) {
-                    if((!object1.equals(nomObjet) && !object2.equals(nomObjet))){
+                    if((!object1.equals(objectName) && !object2.equals(objectName))){
                         HashMap<String,CustomPath> tmp = connexionsTmp.get(object1);
                         if(tmp != null){
                             tmp.put(object2,linkToObject2.get(object2));
@@ -49,71 +52,82 @@ public class Graph {
                 }
             }
         }
-        connexions = connexionsTmp;
-        nbObjet--;
+        this.connections = connexionsTmp;
     }
 
-    public HashMap<String, RectF> getObjects() {
-        return objects;
-    }
-
-    public HashMap<String, HashMap<String, CustomPath>> getConnexions() {
-        return connexions;
-    }
-
-    public void reinitialize(){
-        objects = new HashMap<String,RectF>();
-        connexions = new HashMap<String, HashMap<String,CustomPath>>();
-        connexionsNames = new HashMap<String, HashMap<String,String>>();
-        nbObjet = 0;
-    }
-
-    public void addConnexionName(String objet1, String objet2, String connexionName){
-        HashMap<String,String> link = this.connexionsNames.get(objet1);
-        if(link != null){
-            link.put(objet2,connexionName);
-            this.connexionsNames.put(objet1, link);
+    public void deleteConnection(String nameRect1, String nameRect2){
+        HashMap<String,CustomPath> linkToObject2 = connections.get(nameRect1);
+        if(linkToObject2 != null){
+            linkToObject2.remove(nameRect2);
         }else{
-            link = this.connexionsNames.get(objet2);
-            if(link != null){
-                link.put(objet1, connexionName);
-                this.connexionsNames.put(objet2, link);
-            }else{
-                link = new HashMap<String,String>();
-                link.put(objet2,connexionName);
-                this.connexionsNames.put(objet1, link);
+            linkToObject2 = connections.get(nameRect2);
+            if(linkToObject2 != null){
+                linkToObject2.remove(nameRect1);
             }
         }
     }
 
-    public String getConnexionName(String objet1, String objet2){
-        String result = "";
-        HashMap<String,String> link = this.connexionsNames.get(objet1);
-        if(link != null) {
-            result = link.get(objet2);
+    public HashMap<String, CustomRect> getObjects() {
+        return objects;
+    }
+
+    public HashMap<String, HashMap<String, CustomPath>> getConnexions() {
+        return connections;
+    }
+
+    public void reinitialize(){
+        objects = new HashMap<String,CustomRect>();
+        connections = new HashMap<String, HashMap<String,CustomPath>>();
+        connectionsNames = new HashMap<String, HashMap<String,ConnexionLabel>>();
+        objectId = 0;
+    }
+
+    public void addConnexionName(String object1, String object2, String connexionName){
+        HashMap<String,ConnexionLabel> link = this.connectionsNames.get(object1);
+        if(link != null){
+            link.put(object2, new ConnexionLabel(connexionName));
+            this.connectionsNames.put(object1, link);
         }else{
-            link = this.connexionsNames.get(objet2);
+            link = this.connectionsNames.get(object2);
+            if(link != null){
+                link.put(object1, new ConnexionLabel(connexionName));
+                this.connectionsNames.put(object2, link);
+            }else{
+                link = new HashMap<String,ConnexionLabel>();
+                link.put(object2, new ConnexionLabel(connexionName));
+                this.connectionsNames.put(object1, link);
+            }
+        }
+    }
+
+    public ConnexionLabel getConnexionName(String object1, String object2){
+        ConnexionLabel result = null;
+        HashMap<String,ConnexionLabel> link = this.connectionsNames.get(object1);
+        if(link != null) {
+            result = link.get(object2);
+        }else{
+            link = this.connectionsNames.get(object2);
             if(link != null) {
-                result = link.get(objet1);
+                result = link.get(object1);
             }
         }
         return result;
     }
 
-    public boolean hasConnexionName(String objet1, String objet2){
+    public boolean hasConnexionName(String object1, String object2){
         boolean hasName = false;
-        String name;
-        HashMap<String,String> link = this.connexionsNames.get(objet1);
+        ConnexionLabel label;
+        HashMap<String,ConnexionLabel> link = this.connectionsNames.get(object1);
         if(link != null) {
-            name = link.get(objet2);
-            if(name != null){
+            label = link.get(object2);
+            if(label != null){
                 hasName = true;
             }
         }else{
-            link = this.connexionsNames.get(objet2);
+            link = this.connectionsNames.get(object2);
             if(link != null) {
-                name = link.get(objet1);
-                if(name != null){
+                label = link.get(object1);
+                if(label != null){
                     hasName = true;
                 }
             }
@@ -121,8 +135,36 @@ public class Graph {
         return hasName;
     }
 
-    public int getTaille() {
-        return taille;
+    public static int getSIZE() {
+        return SIZE;
+    }
+
+    public int getObjectId() {
+        return objectId;
+    }
+
+    public void setObjects(HashMap<String,CustomRect> objects){
+        this.objects = objects;
+    }
+
+    public void setObjectsColor(HashMap<String,Integer> objectsColor){
+        this.objectsColor = objectsColor;
+    }
+
+    public HashMap<String, Integer> getObjectsColor(){
+        return this.objectsColor;
+    }
+
+    public HashMap<String, Bitmap> getObjectsIcons() {
+        return objectsIcons;
+    }
+
+    public void setObjectsIcons(HashMap<String, Bitmap> objectsIcons) {
+        this.objectsIcons = objectsIcons;
+    }
+
+    public HashMap<String, HashMap<String, ConnexionLabel>> getConnectionsNames() {
+        return connectionsNames;
     }
 }
 
