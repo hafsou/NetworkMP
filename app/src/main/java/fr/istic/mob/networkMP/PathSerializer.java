@@ -16,6 +16,11 @@ public class PathSerializer implements JsonSerializer<CustomPath> {
         jsonPath.addProperty("yStart", src.getyStart());
         jsonPath.addProperty("xFinal", src.getxFinal());
         jsonPath.addProperty("yFinal", src.getyFinal());
+        jsonPath.addProperty("color", src.getColor());
+        jsonPath.addProperty("strokeWidth", src.getStrokeWidth());
+        jsonPath.addProperty("isBent", src.isBent());
+        jsonPath.addProperty("xControl", src.getxControl());
+        jsonPath.addProperty("yControl", src.getyControl());
         return jsonPath;
     }
 

@@ -7,7 +7,7 @@ import java.util.HashMap;
 
 public class Graph {
 
-    private final static int SIZE = 70;
+    public final static int SIZE = 60;
     private int objectId = 0;
     private HashMap<String,CustomRect> objects;
     private HashMap<String, HashMap<String,CustomPath>> connections;

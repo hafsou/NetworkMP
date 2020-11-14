@@ -9,7 +9,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -42,17 +41,16 @@ public class MainActivity extends AppCompatActivity {
 
     //to save X,Y coordinates
     private float[] lastTouchDownXY = new float[2];
-    //to draw connection, object
+    //to draw connection, objects..
     private DrawView drawView;
-    private String objectName = null;
-    private String newObjectName = null;
+    private String objectName = null; //temporary string
+    private String newObjectName = null; //temporary string
     private Button choosePlan;
     private ListView listView;
     private ArrayAdapter<String> adapter;
     private HashMap<String,Drawable> plansImages;
     private static final int FILE_SELECT_CODE = 0;
-    private static final String TAG = null;
-    SharedPreferences mPrefs;
+    private SharedPreferences mPrefs;
 
 
     @SuppressLint("ClickableViewAccessibility")
@@ -114,13 +112,16 @@ public class MainActivity extends AppCompatActivity {
                     lastTouchDownXY[0] = event.getX();
                     lastTouchDownXY[1] = event.getY();
                 }
-                //let the touch event pass on to whover needs it
+                //let the touch event pass on to whoever needs it
                 return false;
             }
         });
 
     }
 
+    /**
+     *
+     */
     private void showFileChooser() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("*/*");
@@ -278,7 +279,6 @@ public class MainActivity extends AppCompatActivity {
                 CustomPath customPathNameTouched = null;
                 ConnexionLabel connectionLabelTouched = null;
                 boolean touchConnectionLabel = false;
-                System.out.println("TOUCH HERE x : "+ x + " y : "+y);
                 for(String nameRect : objects.keySet()){
                     CustomRect rect = objects.get(nameRect);
                     if(x<= rect.right && x>= rect.left && y>= rect.top && y<=rect.bottom){
@@ -291,8 +291,6 @@ public class MainActivity extends AppCompatActivity {
                     HashMap<String,ConnexionLabel> connexionToRect2 = connectionNames.get(rect1);
                     for(String rect2 : connexionToRect2.keySet()){
                         ConnexionLabel connexionLabel = connexionToRect2.get(rect2);
-                        System.out.println(connexionLabel.getLabel());
-                        System.out.println("h : "+connexionLabel.getHeight() + " x : "+connexionLabel.getX() + " y : "+connexionLabel.getY() +" w :"+connexionLabel.getWidth());
                         if(x<= connexionLabel.getHeight() && x>= connexionLabel.getX() && y<= connexionLabel.getY() && y>=connexionLabel.getWidth()){
                             touchConnectionLabel = true;
                             connectionLabelTouched = connexionLabel;
@@ -461,10 +459,9 @@ public class MainActivity extends AppCompatActivity {
     private void changeObjectName(final String oldName){
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setTitle(getResources().getString(R.string.popup_title));
-        // Set up the input
         final Graph graph = drawView.getGraph();
         final EditText input = new EditText(MainActivity.this);
-        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+        // Specify the type of input expected
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
         final HashMap<String,CustomRect> objects = graph.getObjects();
@@ -596,10 +593,9 @@ public class MainActivity extends AppCompatActivity {
     private void changeConnectionLabel(final ConnexionLabel connexionLabel){
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setTitle(getResources().getString(R.string.popup_connection_name));
-        // Set up the input
         final Graph graph = drawView.getGraph();
         final EditText input = new EditText(MainActivity.this);
-        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+        // Specify the type of input expected
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
         // Set up the buttons
@@ -707,5 +703,11 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("ClickableViewAccessibility")
     private void curveConnections(){
         drawView.setMode(Mode.CURVES);
+        drawView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                return false;
+            }
+        });
     }
 }
