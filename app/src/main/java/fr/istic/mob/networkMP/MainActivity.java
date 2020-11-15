@@ -37,6 +37,10 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Main class of the application NetworkMP
+ * @author Loan et Hafsa
+ */
 public class MainActivity extends AppCompatActivity {
 
     //to save X,Y coordinates
@@ -63,11 +67,11 @@ public class MainActivity extends AppCompatActivity {
         mPrefs = getPreferences(MODE_PRIVATE);
         drawView = findViewById(R.id.drawview);
         choosePlan = findViewById(R.id.button_choose_plan);
-        plansImages = new HashMap<String,Drawable>();
+        plansImages = new HashMap<String,Drawable>(); //init the selection of plans
         plansImages.put(getResources().getString(R.string.default_map),getDrawable(R.drawable.plan));
         plansImages.put(getResources().getString(R.string.map_t2), getDrawable(R.drawable.plandeux));
         plansImages.put(getResources().getString(R.string.map_t3), getDrawable(R.drawable.plantrois));
-        choosePlan.setOnClickListener(new View.OnClickListener() {
+        choosePlan.setOnClickListener(new View.OnClickListener() { //if we click on the button choose plan
             @Override
             public void onClick(View v) {
                 final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
@@ -81,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
                     names[i] = name;
                     i++;
                 }
+                //create the list of the plan name that exist in memory
                 adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, names );
                 listView.setAdapter(adapter);
                 adapter.notifyDataSetChanged();
@@ -89,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
                 import_button.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        showFileChooser();
+                        showFileChooser();  //user click on import plan, we open the file chooser
                         dialog.cancel();
                     }
                 });
@@ -120,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     *
+     * Open the file chooser
      */
     private void showFileChooser() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
@@ -144,13 +149,14 @@ public class MainActivity extends AppCompatActivity {
                         InputStream inputStream = getContentResolver().openInputStream(uri);
                         int indexDelimiter = uri.toString().lastIndexOf("/");
                         String name = uri.toString().substring(indexDelimiter+1);
+                        //transform the input picture in bitmap
                         Bitmap b = BitmapFactory.decodeStream(inputStream);
                         b.setDensity(Bitmap.DENSITY_NONE);
                         Drawable imagePlan = new BitmapDrawable(getResources(),b);
                         drawView.setBackground(imagePlan);
                         plansImages.put(name,imagePlan);
                     } catch (FileNotFoundException e) {
-                        Drawable imagePlan = getDrawable(R.drawable.plan);
+                        Drawable imagePlan = getDrawable(R.drawable.plan); //plan is selected by default
                         drawView.setBackground(imagePlan);
                     }
                 }
@@ -202,53 +208,69 @@ public class MainActivity extends AppCompatActivity {
         drawView.invalidate();
     }
 
+    /**
+     * Save the network created by the user, only if the network is not null (minimum one object)
+     */
     public void saveNetwork(){
         final SharedPreferences.Editor prefsEditor = mPrefs.edit();
         Gson gson = new GsonBuilder().registerTypeAdapter(CustomPath.class, new PathSerializer()).setPrettyPrinting().create();
-        final String json = gson.toJson(drawView.getGraph());
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-        builder.setTitle(getResources().getString(R.string.popup_network_name));
-        final EditText input = new EditText(MainActivity.this);
-        input.setInputType(InputType.TYPE_CLASS_TEXT);
-        builder.setView(input);
-        builder.setPositiveButton(getResources().getString(R.string.confirmer), new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                objectName = input.getText().toString();
-                prefsEditor.putString(objectName, json);
-                prefsEditor.commit();
+        if(drawView.getGraph().isEmpty()){
+            Toast.makeText(getApplicationContext(), R.string.save_empty_network, Toast.LENGTH_LONG).show();
+        }else {
+            final String json = gson.toJson(drawView.getGraph());
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            builder.setTitle(getResources().getString(R.string.popup_network_name));
+            final EditText input = new EditText(MainActivity.this);
+            input.setInputType(InputType.TYPE_CLASS_TEXT);
+            builder.setView(input);
+            builder.setPositiveButton(getResources().getString(R.string.confirmer), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    objectName = input.getText().toString();
+                    prefsEditor.putString(objectName, json);
+                    prefsEditor.commit();
 
-            }
-        });
-        builder.setNegativeButton(getResources().getString(R.string.annuler), new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-            }
-        });
-        builder.show();
+                }
+            });
+            builder.setNegativeButton(getResources().getString(R.string.annuler), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.cancel();
+                }
+            });
+            builder.show();
+        }
     }
 
+    /**
+     * Upload a network stocked in the memory, if not network exists a message is show
+     */
     public void upload_network(){
         final Gson gson = new GsonBuilder().registerTypeAdapter(CustomPath.class, new PathDeserializer()).create();
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setTitle(getResources().getString(R.string.popup_network));
         Map<String,?> test = mPrefs.getAll();
-        final String[] choices = test.keySet().toArray(new String[0]);
-        builder.setItems(choices, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                String json = mPrefs.getString(choices[which], "");
-                Graph graph = gson.fromJson(json, Graph.class);
-                drawView.setGraph(graph);
-                drawView.invalidate();
-            }
-        });
-        AlertDialog dialog = builder.create();
-        dialog.show();
-
+        if(test.isEmpty()){
+            Toast.makeText(getApplicationContext(), R.string.upload_network_empty, Toast.LENGTH_LONG).show();
+        }else {
+            final String[] choices = test.keySet().toArray(new String[0]);
+            builder.setItems(choices, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    String json = mPrefs.getString(choices[which], "");
+                    Graph graph = gson.fromJson(json, Graph.class);
+                    drawView.setGraph(graph);
+                    drawView.invalidate();
+                }
+            });
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        }
     }
 
+    /**
+     * The add connexions mode is selected
+     */
     @SuppressLint("ClickableViewAccessibility")
     public void addConnexions(){
         drawView.setMode(Mode.CONNEXIONS);
@@ -260,9 +282,12 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * The modify objects or connexions mode is selected
+     */
     public void modifyObjectsOrConnexions(){
         drawView.setMode(Mode.MODIFICATIONS);
-        drawView.setOnLongClickListener(new View.OnLongClickListener() {
+        drawView.setOnLongClickListener(new View.OnLongClickListener() {     //if long click : modify the object touched or the connexion
             @Override
             public boolean onLongClick(View v) {
                 final float x = lastTouchDownXY[0];
@@ -271,7 +296,7 @@ public class MainActivity extends AppCompatActivity {
                 CustomRect rectTouched = null;
                 final Graph graph = drawView.getGraph();
                 final HashMap<String,CustomRect> objects = graph.getObjects();
-                final HashMap<String, HashMap<String,ConnexionLabel>> connectionNames = graph.getConnectionsNames();
+                final HashMap<String, HashMap<String,ConnexionLabel>> connectionNames = graph.getConnectionsLabels();
                 HashMap<String, HashMap<String,CustomPath>> connections = graph.getConnexions();
                 String rect1ToDeleteTmp = null;
                 String rect2ToDeleteTmp = null;
@@ -376,6 +401,9 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * The add objects mode is selected
+     */
     @SuppressLint("ClickableViewAccessibility")
     public void addObjects(){
         drawView.setMode(Mode.OBJETS);
@@ -400,10 +428,9 @@ public class MainActivity extends AppCompatActivity {
                     builder.setTitle(getResources().getString(R.string.popup_title));
                     // Set up the input
                     final EditText input = new EditText(MainActivity.this);
-                    // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+                    // Specify the type of input expected
                     input.setInputType(InputType.TYPE_CLASS_TEXT);
                     builder.setView(input);
-
                     // Set up the buttons
                     builder.setPositiveButton(getResources().getString(R.string.confirmer), new DialogInterface.OnClickListener() {
                         @Override
@@ -420,7 +447,6 @@ public class MainActivity extends AppCompatActivity {
                             dialog.cancel();
                         }
                     });
-
                     builder.show();
                 }
                 return true;
@@ -428,6 +454,9 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Take a screenshot of the application/network, and send it by email with the name "screenshot.png"
+     */
     private void screenshot(){
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
         StrictMode.setVmPolicy(builder.build());
@@ -455,6 +484,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Change the name of the object
+     * @param oldName the old name of the object
+     */
     private void changeObjectName(final String oldName){
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setTitle(getResources().getString(R.string.popup_title));
@@ -518,7 +551,7 @@ public class MainActivity extends AppCompatActivity {
                         drawView.invalidate();
                         break;
                     case 3:
-                        objectsColor.put(objectName,Color.rgb(255, 165, 0));
+                        objectsColor.put(objectName,Color.rgb(255, 165, 0)); //orange
                         graph.setObjectsColor(objectsColor);
                         drawView.invalidate();
                         break;
@@ -699,6 +732,9 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    /**
+     * The curve connections mode is selected
+     */
     @SuppressLint("ClickableViewAccessibility")
     private void curveConnections(){
         drawView.setMode(Mode.CURVES);

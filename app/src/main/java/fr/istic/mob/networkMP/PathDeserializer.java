@@ -7,8 +7,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import java.lang.reflect.Type;
 
-public class PathDeserializer implements JsonDeserializer<CustomPath>
-{
+/**
+ * Class for deserialize the path
+ * @author Loan et Hafsa
+ */
+public class PathDeserializer implements JsonDeserializer<CustomPath> {
+
     @Override
     public CustomPath deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
         JsonObject jsonObject = json.getAsJsonObject();
@@ -25,6 +29,5 @@ public class PathDeserializer implements JsonDeserializer<CustomPath>
         cp.drawThisPath();
         return cp;
     }
-
 
 }

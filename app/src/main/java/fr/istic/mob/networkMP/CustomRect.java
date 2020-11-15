@@ -2,6 +2,10 @@ package fr.istic.mob.networkMP;
 
 import android.graphics.RectF;
 
+/**
+ * Class that represent objects of the network (rectangle) with the name
+ * @author Loan et Hafsa
+ */
 public class CustomRect extends RectF {
 
     public String name;

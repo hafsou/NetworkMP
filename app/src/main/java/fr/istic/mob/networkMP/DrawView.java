@@ -14,10 +14,13 @@ import android.util.AttributeSet;
 import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.widget.EditText;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * Class that draw the network on the plan
+ * @author Loan et Hafsa
+ */
 public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
 
     Paint paint;
@@ -27,7 +30,7 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
     private SparseArray<CustomPath> mPathTouchedPointer = new SparseArray<CustomPath>();
     private Mode mode = Mode.OBJETS;
     private Graph graph;
-    private ArrayList<CustomPath> pathTemporaryCreated;
+    private ArrayList<CustomPath> pathTemporaryCreated; //used for the creation of the path between two objects
     private String tmpRectName = "";
     private String connexionName;
 
@@ -45,6 +48,7 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
         HashMap<String,Integer> objectsColor = graph.getObjectsColor();
         HashMap<String,Bitmap> objectsIcons = graph.getObjectsIcons();
         HashMap<String, HashMap<String,CustomPath>> connexions = graph.getConnexions();
+        //draw all the connections
         for(String object1 : connexions.keySet()){
             for(String object2 : connexions.get(object1).keySet()){
                 paint.setColor(Color.BLACK);
@@ -60,11 +64,12 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                         paint.setStyle(Paint.Style.FILL);
                         paint.setTextSize(60);
                         paint.setColor(Color.WHITE);
-                        ConnexionLabel connexionLabel = graph.getConnexionName(object1, object2);
+                        ConnexionLabel connexionLabel = graph.getConnexionLabel(object1, object2);
                         PathMeasure pm = new PathMeasure(pathToDraw, false);
                         float aCoordinates[] = {0f, 0f};
                         //get point from the middle
                         pm.getPosTan(pm.getLength() * 0.5f, aCoordinates, null);
+                        //draw the connexion name on the middle of the connexion
                         canvas.drawText(connexionLabel.getLabel(), aCoordinates[0], aCoordinates[1], paint);
                         connexionLabel.setX(aCoordinates[0]);
                         connexionLabel.setY(aCoordinates[1]);
@@ -75,6 +80,7 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
         paint.setColor(Color.BLACK);
         paint.setStyle(Paint.Style.FILL);
         paint.setStrokeWidth(4);
+        //draw all the objects
         for(String nameRect : objects.keySet()){
             CustomRect rect = objects.get(nameRect);
             if(objectsColor.containsKey(nameRect)) {
@@ -86,7 +92,7 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
             if(rect != null) {
                 if(objectsIcons.containsKey(nameRect)){
                     Bitmap bitmap = objectsIcons.get(nameRect);
-                    canvas.drawBitmap(bitmap,rect.centerX(),rect.centerY(),paint);
+                    canvas.drawBitmap(bitmap,rect.left,rect.top,paint);
                 }else{
                     canvas.drawRect(rect, paint);
                 }
@@ -129,7 +135,6 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                 touchedRect = getTouchedRect(xTouch, yTouch);
                 tmpRectName = getNameTouchedRect(xTouch,yTouch);
                 nameTouchedRect = getNameTouchedRect(xTouch,yTouch);
-                System.out.println("name touched rect : "+nameTouchedRect);
                 if(mode == Mode.OBJETS) {
                     if (touchedRect != null) {
                         setLongClickable(false);
@@ -177,7 +182,6 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                 final int pointerCount = event.getPointerCount();
                 HashMap<String, HashMap<String,CustomPath>> theConnexions = graph.getConnexions();
                 HashMap<String,CustomRect> allObjects = graph.getObjects();
-                System.out.println("Move");
                 for (actionIndex = 0; actionIndex < pointerCount; actionIndex++) {
                     // Some pointer has moved, search it by pointer id
                     pointerId = event.getPointerId(actionIndex);
@@ -284,7 +288,6 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                     //draw the CustomPath only if the last position is an another object
                     if(touchedRect != null && nameTouchedRect != tmpRectName){
                         PathMeasure pm = new PathMeasure(pathCreated, false);
-                        //coordinates will be here
                         float aCoordinates[] = {0f, 0f};
                         //get point from the middle
                         pm.getPosTan(pm.getLength() * 0f, aCoordinates, null);
@@ -293,7 +296,6 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                         pathCreated.lineTo(xTouch,yTouch);
                         pathCreated.setStartPoints(aCoordinates[0],aCoordinates[1]);
                         pathCreated.setFinalPoints(xTouch, yTouch);
-                        //displayConnexions();
                         if(!pathExist(tmpRectName,nameTouchedRect)){
                             if(connexions.size() == 0){
                                 HashMap<String,CustomPath> link = new HashMap<String,CustomPath>();
@@ -334,7 +336,6 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
 
                     }
                 }
-
                 clearRectPointer();
                 clearPathPointer();
                 clearPathTouchedPointer();
@@ -363,6 +364,13 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
         return super.onTouchEvent(event) || handled;
     }
 
+    /**
+     * Open a popup that ask the user for the name of the path.
+     * If the user press cancel, the name of the connexion will be "default".
+     * @param objet1 first object of the connexion
+     * @param objet2 second object of the connexion
+     * @param context context
+     */
     private void popupNamePath(final String objet1, final String objet2, Context context){
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle(getResources().getString(R.string.popupNamePath_title));
@@ -373,7 +381,7 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 connexionName = input.getText().toString();
-                graph.addConnexionName(objet1, objet2, connexionName);
+                graph.addConnexionLabel(objet1, objet2, connexionName);
                 invalidate();
             }
         });
@@ -381,7 +389,7 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 connexionName = "default";
-                graph.addConnexionName(objet1, objet2, connexionName);
+                graph.addConnexionLabel(objet1, objet2, connexionName);
                 invalidate();
             }
         });
@@ -389,9 +397,9 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
     }
 
     /**
-     *
-     * @param firstObject
-     * @param secondObject
+     * Check if a path exist between two objects
+     * @param firstObject the first object of the connexion
+     * @param secondObject the second object of the connexion
      * @return
      */
     private boolean pathExist(String firstObject, String secondObject){
@@ -411,6 +419,9 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
         return exist;
     }
 
+    /**
+     * This method print the existing connexions between objects.
+     */
     private void displayConnexions(){
         HashMap<String, HashMap<String,CustomPath>> connexions = graph.getConnexions();
         for(String object1 : connexions.keySet()){
@@ -423,28 +434,41 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
         }
     }
 
+    /**
+     * Reinitialize the graph
+     */
     public void reinitializeGraph(){
         graph.reinitialize();
     }
 
     /**
-     * Clears all CircleArea - pointer id relations
+     * Clear the rect pointer
      */
     private void clearRectPointer() {
-        System.out.println("clearCirclePointer");
         mRectPointer.clear();
     }
 
+    /**
+     * Clear the path pointer
+     */
     private void clearPathPointer() {
-        System.out.println("clearPathPointer");
         mPathPointer.clear();
     }
 
+    /**
+     * Clear the path touched pointer
+     */
     private void clearPathTouchedPointer() {
-        System.out.println("clearPathTouchedPointer");
         mPathTouchedPointer.clear();
     }
 
+    /**
+     * Return the rectangle touched by the user at the coordinate (xTouch, yTouch)
+     * Return null if no rectangle touched
+     * @param xTouch x coordinate
+     * @param yTouch y coordinate
+     * @return the CustomRect touched or null
+     */
     private CustomRect getTouchedRect(final int xTouch, final int yTouch) {
         CustomRect touched = null;
         HashMap<String,CustomRect> objects = graph.getObjects();
@@ -458,16 +482,22 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
         return touched;
     }
 
+    /**
+     * Return the path touched by the user at the coordinate (x,y).
+     * The detection of the path touched is : the label is touched or not.
+     * Return null if no path/label touched.
+     * @param x
+     * @param y
+     * @return the CustomPath or null
+     */
     private CustomPath getTouchedPath(final int x, final int y){
         CustomPath customPathNameTouched = null;
-        HashMap<String, HashMap<String,ConnexionLabel>> connectionNames = graph.getConnectionsNames();
+        HashMap<String, HashMap<String,ConnexionLabel>> connectionNames = graph.getConnectionsLabels();
         HashMap<String, HashMap<String,CustomPath>> connections = graph.getConnexions();
         for(String rect1 : connectionNames.keySet()){
             HashMap<String,ConnexionLabel> connexionToRect2 = connectionNames.get(rect1);
             for(String rect2 : connexionToRect2.keySet()){
                 ConnexionLabel connexionLabel = connexionToRect2.get(rect2);
-                System.out.println(connexionLabel.getLabel());
-                System.out.println("h : "+connexionLabel.getHeight() + " x : "+connexionLabel.getX() + " y : "+connexionLabel.getY() +" w :"+connexionLabel.getWidth());
                 if(x<= connexionLabel.getHeight() && x>= connexionLabel.getX() && y<= connexionLabel.getY() && y>=connexionLabel.getWidth()){
                     customPathNameTouched = connections.get(rect1).get(rect2);
                 }
@@ -476,6 +506,13 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
         return customPathNameTouched;
     }
 
+    /**
+     * Return the name of the rectangle touched
+     * Return null if no rectangle touched
+     * @param xTouch
+     * @param yTouch
+     * @return the name or null
+     */
     private String getNameTouchedRect(final int xTouch, final int yTouch){
         String touched = null;
         HashMap<String,CustomRect> objects = graph.getObjects();

@@ -1,5 +1,9 @@
 package fr.istic.mob.networkMP;
 
+/**
+ * Class that represent the label of a connexion between two objects
+ * @author Loan et Hafsa
+ */
 public class ConnexionLabel {
 
     private String label;

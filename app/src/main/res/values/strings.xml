@@ -49,4 +49,6 @@
     <string name="medium">Moyen</string>
     <string name="large">Large</string>
     <string name="curve_connections">Courber une connexion</string>
+    <string name="upload_network_empty">Il n\'existe aucun enregistrement.</string>
+    <string name="save_empty_network">Vous ne pouvez pas sauvegarder un reseau vide.</string>
 </resources>

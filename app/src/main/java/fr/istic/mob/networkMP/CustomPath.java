@@ -3,6 +3,12 @@ package fr.istic.mob.networkMP;
 import android.graphics.Color;
 import android.graphics.Path;
 
+/**
+ * Class that represent a path between two objects
+ * With a start point (xStart,yStart) and a final point (xFinal,yFinal)
+ * With it color, stroke width and a coordinates of the control point if the path is bent.
+ * @author Loan et Hafsa
+ */
 public class CustomPath extends Path {
 
     private float xStart;
@@ -12,7 +18,7 @@ public class CustomPath extends Path {
     private int color;
     private int strokeWidth;
     private boolean isBent;
-    private float xControl;
+    private float xControl; //control point of the quadratic bezier if the path is bent
     private float yControl;
 
     public CustomPath(){
@@ -33,7 +39,7 @@ public class CustomPath extends Path {
         this.xFinal = xFinal;
         this.yFinal = yFinal;
         this.xControl = xControl;
-        this.yControl =yControl;
+        this.yControl = yControl;
         this.color = color;
         this.strokeWidth = strokeWidth;
         this.isBent = isBent;
@@ -83,18 +89,6 @@ public class CustomPath extends Path {
         return strokeWidth;
     }
 
-    public void setColor(int color) {
-        this.color = color;
-    }
-
-    public void setStrokeWidth(int strokeWidth) {
-        this.strokeWidth = strokeWidth;
-    }
-
-    public void setBent(boolean bent) {
-        isBent = bent;
-    }
-
     public boolean isBent() {
         return isBent;
     }
@@ -105,6 +99,18 @@ public class CustomPath extends Path {
 
     public float getyControl() {
         return yControl;
+    }
+
+    public void setColor(int color) {
+        this.color = color;
+    }
+
+    public void setStrokeWidth(int strokeWidth) {
+        this.strokeWidth = strokeWidth;
+    }
+
+    public void setBent(boolean bent) {
+        isBent = bent;
     }
 
     public void setxControl(float xControl) {

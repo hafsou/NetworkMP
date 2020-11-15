@@ -50,4 +50,6 @@
     <string name="medium">Medium</string>
     <string name="large">Large</string>
     <string name="curve_connections">Bend a connexion</string>
+    <string name="upload_network_empty">No network saved found.</string>
+    <string name="save_empty_network">You can\'t save an empty network.</string>
 </resources>
