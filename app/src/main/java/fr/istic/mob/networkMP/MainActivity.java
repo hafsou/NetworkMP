@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
 
     //to save X,Y coordinates
     private float[] lastTouchDownXY = new float[2];
-    //to draw connection, objects..
+    //to draw connections, objects..
     private DrawView drawView;
     private String objectName = null; //temporary string
     private String newObjectName = null; //temporary string
@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
                 listView = rowList.findViewById(R.id.listView);
                 Button import_button = rowList.findViewById(R.id.import_image);
                 String[] names = new String[plansImages.keySet().size()];
-                int i=0;
+                int i = 0;
                 for(String name : plansImages.keySet()){
                     names[i] = name;
                     i++;
@@ -161,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
+        // Inflate the menu; this adds items to the action bar
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
@@ -244,7 +244,6 @@ public class MainActivity extends AppCompatActivity {
                 drawView.invalidate();
             }
         });
-        // create and show the alert dialog
         AlertDialog dialog = builder.create();
         dialog.show();
 

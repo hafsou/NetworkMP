@@ -62,7 +62,6 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                         paint.setColor(Color.WHITE);
                         ConnexionLabel connexionLabel = graph.getConnexionName(object1, object2);
                         PathMeasure pm = new PathMeasure(pathToDraw, false);
-                        //coordinates will be here
                         float aCoordinates[] = {0f, 0f};
                         //get point from the middle
                         pm.getPosTan(pm.getLength() * 0.5f, aCoordinates, null);
@@ -118,14 +117,15 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
         int actionIndex = event.getActionIndex();
         // get touch event coordinates and make transparent rect from it
         switch (event.getActionMasked()) {
-            case MotionEvent.ACTION_DOWN:    //appui sur l'écran
+            //press on the screen
+            case MotionEvent.ACTION_DOWN:
                 // it's the first pointer, so clear all existing pointers data
                 clearRectPointer();
                 clearPathPointer();
                 clearPathTouchedPointer();
                 xTouch = (int) event.getX(0);
                 yTouch = (int) event.getY(0);
-                // check if we've touched inside some rectangle
+                // check if we have touched inside some rectangle
                 touchedRect = getTouchedRect(xTouch, yTouch);
                 tmpRectName = getNameTouchedRect(xTouch,yTouch);
                 nameTouchedRect = getNameTouchedRect(xTouch,yTouch);
@@ -257,7 +257,8 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                             double distanceX = middleCoord[0] - xTouch;
                             float y = Float.parseFloat(String.valueOf(distanceY));
                             float x = Float.parseFloat(String.valueOf(distanceX));
-                            pathTouched.quadTo(xTouch-x,yTouch+y,oldXFinal,oldYFinal); //courbe de bezier avec point de controle
+                            //Bezier point with control point
+                            pathTouched.quadTo(xTouch-x,yTouch+y,oldXFinal,oldYFinal);
                             pathTouched.setBent(true);
                             pathTouched.setxControl(xTouch-x);
                             pathTouched.setyControl(yTouch+y);
@@ -268,7 +269,8 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                 handled = true;
                 break;
 
-            case MotionEvent.ACTION_UP:   //relachement du doigt sur l'ecran
+                //finger's lifted on the screen
+            case MotionEvent.ACTION_UP:
                 setLongClickable(true);
                 xTouch = (int) event.getX(0);
                 yTouch = (int) event.getY(0);
@@ -356,23 +358,17 @@ public class DrawView extends androidx.appcompat.widget.AppCompatImageView {
                 break;
 
             default:
-                // do nothing
                 break;
         }
-        //setLongClickable(true);
         return super.onTouchEvent(event) || handled;
     }
 
     private void popupNamePath(final String objet1, final String objet2, Context context){
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle(getResources().getString(R.string.popupNamePath_title));
-        // Set up the input
         final EditText input = new EditText(context);
-        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
-
-        // Set up the buttons
         builder.setPositiveButton(getResources().getString(R.string.confirmer), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {

@@ -16,11 +16,11 @@ public class Graph {
     private HashMap<String, Bitmap> objectsIcons;
 
     public Graph(){
-        connections = new HashMap<String, HashMap<String,CustomPath>>();
-        connectionsNames = new HashMap<String, HashMap<String,ConnexionLabel>>();
-        objects = new HashMap<String,CustomRect>();
-        objectsColor = new HashMap<String, Integer>();
-        objectsIcons = new HashMap<String, Bitmap>();
+        this.connections = new HashMap<String, HashMap<String,CustomPath>>();
+        this.connectionsNames = new HashMap<String, HashMap<String,ConnexionLabel>>();
+        this.objects = new HashMap<String,CustomRect>();
+        this.objectsColor = new HashMap<String, Integer>();
+        this.objectsIcons = new HashMap<String, Bitmap>();
     }
 
     public void addObjet(Context context, String objectName, float x, float y){
@@ -33,7 +33,7 @@ public class Graph {
     public void deleteObject(String objectName){
         this.objects.remove(objectName);
         HashMap<String, HashMap<String,CustomPath>> connexionsTmp = new HashMap<String, HashMap<String,CustomPath>>();
-        //suppression des connexions associées
+        //delete associated connections
         for(String object1 : connections.keySet()){
             for(String object2 : connections.get(object1).keySet()){
                 HashMap<String,CustomPath> linkToObject2 = connections.get(object1);
